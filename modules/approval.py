@@ -433,16 +433,33 @@ class ApprovalWorkflow:
         lines.append("")
 
         lines.append("【审批节点】")
+        current_node = self._get_current_pending_node(flow)
+        if current_node and flow["status"] == "IN_PROGRESS":
+            lines.append(f"  >>> 当前待审批：{current_node['label']}（{current_node['approver']}）<<<")
+            lines.append("")
+
         for i, node in enumerate(flow["nodes"], 1):
             status_map = {
                 ApprovalStatus.PENDING: "待审批",
                 ApprovalStatus.APPROVED: "已通过",
                 ApprovalStatus.REJECTED: "已驳回",
                 ApprovalStatus.DELEGATED: "已转派",
-                ApprovalStatus.POST_APPROVED: "事后补签"
+                ApprovalStatus.POST_APPROVED: "事后补签",
+                "NOT_STARTED": "未开始"
             }
             status_str = status_map.get(node["status"], node["status"])
-            lines.append(f"  {i}. {node['label']} - {node['approver']} - {status_str}")
+
+            prefix = ""
+            if node["status"] == ApprovalStatus.PENDING:
+                prefix = "▶ "
+            elif node["status"] == ApprovalStatus.APPROVED or node["status"] == ApprovalStatus.POST_APPROVED:
+                prefix = "✓ "
+            elif node["status"] == ApprovalStatus.REJECTED:
+                prefix = "✗ "
+            else:
+                prefix = "○ "
+
+            lines.append(f"  {prefix}{i}. {node['label']} - {node['approver']} - {status_str}")
             if node.get("approved_at"):
                 lines.append(f"     审批时间: {node['approved_at']}")
             if node.get("comment"):

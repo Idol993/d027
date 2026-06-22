@@ -551,13 +551,32 @@ class ReportGenerator:
                     "ROLLED_BACK": "已回滚"
                 }
                 status_str = status_map.get(batch["status"], batch["status"])
-                lines.append(f"    第{batch['batch_no']}批 ({batch['level']}): {batch['center_count']}个中心 - {status_str}")
+
+                prefix = ""
+                if batch["status"] == "OBSERVING":
+                    prefix = "▶ "
+                elif batch["status"] == "COMPLETED":
+                    prefix = "✓ "
+                elif batch["status"] == "ROLLED_BACK":
+                    prefix = "✗ "
+                elif batch["status"] == "RELEASING":
+                    prefix = "→ "
+                else:
+                    prefix = "○ "
+
+                lines.append(f"  {prefix}第{batch['batch_no']}批 ({batch['level']}): {batch['center_count']}个中心 - {status_str}")
                 if batch.get("release_time"):
                     lines.append(f"      发布时间: {batch['release_time']}")
                 if batch.get("rollback_time"):
                     lines.append(f"      回滚时间: {batch['rollback_time']}")
+                lines.append(f"      监控采集: {batch.get('metric_count', 0)} 轮")
                 if batch.get("fuse_event_count", 0) > 0:
                     lines.append(f"      熔断事件: {batch['fuse_event_count']} 次")
+                if batch.get("latest_metrics"):
+                    lines.append(f"      最新监控指标:")
+                    for m in batch["latest_metrics"]:
+                        icon = "✓" if m["status"] == "NORMAL" else "⚠" if m["status"] == "WARN" else "✗"
+                        lines.append(f"        {icon} {m['label']}: {m['value']}{m.get('unit', '')}")
             lines.append("")
 
         fuse = report["fuse_analysis"]

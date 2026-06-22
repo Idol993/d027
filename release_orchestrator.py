@@ -189,11 +189,15 @@ class ReleaseOrchestrator:
             gray_plan = self.gray_manager.plan_gray_batches(release_id, centers)
             release["gray_plan"] = gray_plan
             release["status"] = ReleaseStatus.GRAYING
+            release["current_stage"] = "gray_release"
             release["updated_at"] = get_now_iso()
             self._save_release(release)
 
-        result = self.gray_manager.start_next_batch(release_id, operator)
+        self.gray_manager.start_next_batch(release_id, operator)
         release = self._load_release(release_id)
+        release["gray_plan"] = self.gray_manager.get_gray_plan(release_id)
+        release["updated_at"] = get_now_iso()
+        self._save_release(release)
 
         return release
 
@@ -202,11 +206,13 @@ class ReleaseOrchestrator:
                                operator: str = "system") -> Dict[str, Any]:
         result = self.gray_manager.complete_batch_release(release_id, success, operator)
         release = self._load_release(release_id)
+        release["gray_plan"] = self.gray_manager.get_gray_plan(release_id)
 
         if not success:
             release["status"] = ReleaseStatus.ROLLED_BACK
             release["current_stage"] = "rolled_back"
 
+        release["updated_at"] = get_now_iso()
         self._save_release(release)
         return release
 
@@ -220,6 +226,10 @@ class ReleaseOrchestrator:
 
         fuse_result = self.gray_manager.check_fuse_condition(release_id)
 
+        release = self._load_release(release_id)
+        release["gray_plan"] = self.gray_manager.get_gray_plan(release_id)
+        release["updated_at"] = get_now_iso()
+
         if fuse_result["triggered"]:
             self.logger.warning(
                 f"熔断触发: {release_id}, 级别: {fuse_result['fuse_level_name']}")
@@ -227,6 +237,7 @@ class ReleaseOrchestrator:
             if fuse_result["fuse_level"] >= 2:
                 scope = "all" if fuse_result["fuse_level"] >= 3 else "current"
                 rollback_result = self.execute_rollback(release_id, scope)
+                release = self._load_release(release_id)
                 return {
                     "metrics": metrics,
                     "fuse": fuse_result,
@@ -234,18 +245,22 @@ class ReleaseOrchestrator:
                 }
 
         obs_result = self.gray_manager.check_observation_complete(release_id)
+        release = self._load_release(release_id)
+
         if obs_result.get("complete") and not obs_result.get("all_done"):
             self.logger.info(f"观察期结束，自动启动下一批次: {release_id}")
             self.gray_manager.start_next_batch(release_id)
+            release = self._load_release(release_id)
+            release["gray_plan"] = self.gray_manager.get_gray_plan(release_id)
 
         if obs_result.get("all_done"):
-            release = self._load_release(release_id)
             release["status"] = ReleaseStatus.COMPLETED
             release["current_stage"] = "completed"
             release["completed_at"] = get_now_iso()
-            release["updated_at"] = get_now_iso()
-            self._save_release(release)
             self.logger.info(f"发布全部完成: {release_id}")
+
+        release["updated_at"] = get_now_iso()
+        self._save_release(release)
 
         return {
             "metrics": metrics,
