@@ -1,0 +1,283 @@
+{
+  "report_type": "release_review",
+  "release_id": "REL-20260622-DD0A63",
+  "generated_at": "2026-06-22T13:44:44.123845",
+  "overview": {
+    "version": "2.3.0",
+    "release_type": "常规发布",
+    "applicant": "dev_li",
+    "apply_time": "2026-06-22T13:44:44.077550",
+    "status": "观察中",
+    "total_duration_hours": 0,
+    "summary": "常规发布 - 观察中"
+  },
+  "validation_analysis": {
+    "available": true,
+    "total": 12,
+    "passed": 11,
+    "failed": 0,
+    "warnings": 1,
+    "pass_rate": 91.67,
+    "blocked": false,
+    "dimensions": {
+      "subject_data": {
+        "label": "受试者数据",
+        "passed": 2,
+        "total": 3,
+        "pass_rate": 66.67
+      },
+      "ethics_compliance": {
+        "label": "伦理合规",
+        "passed": 3,
+        "total": 3,
+        "pass_rate": 100.0
+      },
+      "trial_progress": {
+        "label": "试验进度",
+        "passed": 3,
+        "total": 3,
+        "pass_rate": 100.0
+      },
+      "electronic_documents": {
+        "label": "电子文档",
+        "passed": 3,
+        "total": 3,
+        "pass_rate": 100.0
+      }
+    },
+    "failed_items": [
+      {
+        "dimension": "受试者数据",
+        "item": "未闭环数据 Query",
+        "result": "WARN",
+        "severity": "MEDIUM",
+        "blocking": false,
+        "suggestion": "存在 2 条未闭环数据 Query。建议：尽快处理并闭环。"
+      }
+    ]
+  },
+  "approval_analysis": {
+    "available": true,
+    "mode": "串行",
+    "total_nodes": 4,
+    "approved": 4,
+    "rejected": 0,
+    "pending": 0,
+    "avg_approval_hours": 0.0,
+    "nodes": [
+      {
+        "name": "临床审批",
+        "approver": "dr_zhang",
+        "status": "APPROVED",
+        "duration_hours": 0.0,
+        "comment": "经评估，本次发布不涉及受试者安全风险，方案执行无影响。",
+        "is_post_approval": false
+      },
+      {
+        "name": "数据审批",
+        "approver": "dm_li",
+        "status": "APPROVED",
+        "duration_hours": 0.0,
+        "comment": "数据迁移方案已评审，EDC同步接口兼容性验证通过。",
+        "is_post_approval": false
+      },
+      {
+        "name": "质控审批",
+        "approver": "qa_wang",
+        "status": "APPROVED",
+        "duration_hours": 0.0,
+        "comment": "GCP合规性评估通过，TMF文档已同步更新。",
+        "is_post_approval": false
+      },
+      {
+        "name": "PM审批",
+        "approver": "pm_chen",
+        "status": "APPROVED",
+        "duration_hours": 0.0,
+        "comment": "发布窗口确认，资源协调到位，同意发布。",
+        "is_post_approval": false
+      }
+    ],
+    "has_deviation": false,
+    "hotfix_reason": null
+  },
+  "gray_analysis": {
+    "available": true,
+    "total_centers": 25,
+    "batch_count": 3,
+    "status": "OBSERVING",
+    "batches": [
+      {
+        "batch_no": 1,
+        "level": "非核心/低入组中心",
+        "center_count": 9,
+        "status": "OBSERVING",
+        "observation_hours": 4,
+        "release_time": "2026-06-22T13:44:44.091988",
+        "rollback_time": null,
+        "metric_count": 25,
+        "fuse_event_count": 1,
+        "latest_metrics": [
+          {
+            "name": "approval_block_rate",
+            "label": "审批阻塞率",
+            "value": 5.51,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T13:44:44.118764"
+          },
+          {
+            "name": "data_anomaly_rate",
+            "label": "数据异常率",
+            "value": 0.88,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T13:44:44.118764"
+          },
+          {
+            "name": "entry_delay_rate",
+            "label": "录入延迟率",
+            "value": 4.2,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T13:44:44.118764"
+          },
+          {
+            "name": "login_success_rate",
+            "label": "登录成功率",
+            "value": 99.7,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T13:44:44.118764"
+          },
+          {
+            "name": "system_error_rate",
+            "label": "系统错误率",
+            "value": 0.33,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T13:44:44.118764"
+          }
+        ],
+        "release_duration_minutes": 0.0,
+        "metric_type_count": 5,
+        "monitor_cycles": 5
+      },
+      {
+        "batch_no": 2,
+        "level": "常规临床中心",
+        "center_count": 13,
+        "status": "PENDING",
+        "observation_hours": 8,
+        "release_time": null,
+        "rollback_time": null,
+        "metric_count": 0,
+        "fuse_event_count": 0,
+        "latest_metrics": [],
+        "metric_type_count": 0,
+        "monitor_cycles": 0
+      },
+      {
+        "batch_no": 3,
+        "level": "核心枢纽/高入组中心",
+        "center_count": 3,
+        "status": "PENDING",
+        "observation_hours": 24,
+        "release_time": null,
+        "rollback_time": null,
+        "metric_count": 0,
+        "fuse_event_count": 0,
+        "latest_metrics": [],
+        "metric_type_count": 0,
+        "monitor_cycles": 0
+      }
+    ]
+  },
+  "fuse_analysis": {
+    "available": true,
+    "total_fuse_events": 1,
+    "events": [
+      {
+        "batch_no": 1,
+        "fuse_level": 1,
+        "fuse_level_name": "一级熔断（预警）",
+        "trigger_time": "2026-06-22T13:44:44.110070",
+        "reasons": [
+          {
+            "metric": "录入延迟率",
+            "value": 12.0,
+            "threshold": 10.0,
+            "level": "warn"
+          }
+        ]
+      }
+    ],
+    "had_fuse": true
+  },
+  "risks_and_improvements": {
+    "risks": [
+      {
+        "type": "熔断触发",
+        "description": "灰度发布期间触发 1 次熔断",
+        "severity": "高"
+      }
+    ],
+    "improvements": [
+      "加强发布前测试覆盖，降低生产环境故障概率"
+    ]
+  },
+  "appendix": {
+    "audit_trail": {
+      "available": true,
+      "total_logs": 11,
+      "operation_types": {
+        "RELEASE_CREATED": 1,
+        "VALIDATION_COMPLETED": 1,
+        "APPROVAL_FLOW_CREATED": 1,
+        "APPROVAL_NODE_APPROVED": 4,
+        "GRAY_PLAN_CREATED": 1,
+        "GRAY_BATCH_STARTED": 1,
+        "GRAY_BATCH_RELEASE_COMPLETED": 1,
+        "FUSE_TRIGGERED": 1
+      }
+    },
+    "timeline": [
+      {
+        "time": "2026-06-22T13:44:44.076144",
+        "event": "前置校验完成",
+        "operator": "system",
+        "detail": "通过"
+      },
+      {
+        "time": "2026-06-22T13:44:44.077550",
+        "event": "发布申请提交",
+        "operator": "dev_li"
+      },
+      {
+        "time": "2026-06-22T13:44:44.079935",
+        "event": "临床审批 通过",
+        "operator": "dr_zhang"
+      },
+      {
+        "time": "2026-06-22T13:44:44.081993",
+        "event": "数据审批 通过",
+        "operator": "dm_li"
+      },
+      {
+        "time": "2026-06-22T13:44:44.083978",
+        "event": "质控审批 通过",
+        "operator": "qa_wang"
+      },
+      {
+        "time": "2026-06-22T13:44:44.086332",
+        "event": "PM审批 通过",
+        "operator": "pm_chen"
+      },
+      {
+        "time": "2026-06-22T13:44:44.091988",
+        "event": "第1批发布开始",
+        "operator": "system"
+      }
+    ]
+  }
+}

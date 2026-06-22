@@ -5,6 +5,7 @@ CTMS 系统版本发布与智能回滚自动化平台 — 主入口
 
 import os
 import sys
+import json
 import time
 import argparse
 from datetime import datetime, timedelta
@@ -602,6 +603,407 @@ class ReleaseOrchestrator:
 
         return "\n".join(lines)
 
+    def verify_audit_integrity(self, release_id: str) -> Dict[str, Any]:
+        release = self.get_release(release_id)
+        if not release:
+            return {
+                "success": False,
+                "error": f"发布编号不存在: {release_id}",
+                "release_id": release_id
+            }
+
+        audit_records = self.audit_logger.query(target_type="release", target_id=release_id)
+        if not audit_records:
+            return {
+                "success": True,
+                "release_id": release_id,
+                "total_records": 0,
+                "note": "暂无审计记录",
+                "hash_chain_valid": None,
+                "operation_counts": {},
+                "gaps": [],
+                "mismatches": []
+            }
+
+        audit_records.sort(key=lambda x: x.get("created_at", ""))
+
+        operation_counts = {}
+        for rec in audit_records:
+            op = rec.get("operation_type", "UNKNOWN")
+            operation_counts[op] = operation_counts.get(op, 0) + 1
+
+        gaps = []
+        mismatches = []
+        hash_chain_valid = True
+
+        for i in range(len(audit_records)):
+            current = audit_records[i]
+
+            if i == 0:
+                pass
+            else:
+                prev = audit_records[i - 1]
+                expected_prev = prev.get("hash", "")
+                if current.get("prev_hash") != expected_prev:
+                    mismatches.append({
+                        "index": i + 1,
+                        "trace_id": current.get("trace_id", ""),
+                        "operation": current.get("operation_type", ""),
+                        "issue": (f"第 {i+1} 条与第 {i} 条 hash 不匹配。"
+                                 f"期望: {expected_prev[:16]}..., 实际: {current.get('prev_hash', '缺失')[:16]}...")
+                    })
+                    hash_chain_valid = False
+
+            current_time = current.get("created_at", "")
+            if i > 0:
+                prev_time = audit_records[i - 1].get("created_at", "")
+                if current_time and prev_time and current_time < prev_time:
+                    gaps.append({
+                        "index": i + 1,
+                        "issue": f"时间顺序异常: 第 {i+1} 条时间({current_time}) 早于 第 {i} 条({prev_time})"
+                    })
+
+            if current.get("hash") and current.get("prev_hash"):
+                import hashlib
+                record_for_hash = {
+                    k: v for k, v in current.items()
+                    if k not in ["hash"]
+                }
+                from common.utils import calc_hash_chain
+                recalc_hash = calc_hash_chain(current.get("prev_hash", ""), record_for_hash)
+                if recalc_hash != current.get("hash"):
+                    mismatches.append({
+                        "index": i + 1,
+                        "trace_id": current.get("trace_id", ""),
+                        "operation": current.get("operation_type", ""),
+                        "issue": (f"记录 hash 校验失败。"
+                                 f"期望: {current.get('hash', '')[:16]}..., 重计算: {recalc_hash[:16]}...")
+                    })
+                    hash_chain_valid = False
+
+        if len(audit_records) > 1:
+            expected_seq = list(range(1, len(audit_records) + 1))
+            actual_ops = [r.get("operation_type", "") for r in audit_records]
+
+        return {
+            "success": True,
+            "release_id": release_id,
+            "total_records": len(audit_records),
+            "hash_chain_valid": hash_chain_valid,
+            "operation_counts": operation_counts,
+            "gaps": gaps,
+            "mismatches": mismatches,
+            "records": audit_records
+        }
+
+    def get_audit_verify_text(self, release_id: str) -> str:
+        result = self.verify_audit_integrity(release_id)
+
+        lines = []
+        lines.append("=" * 80)
+        lines.append("  CTMS 审计完整性核验报告")
+        lines.append("=" * 80)
+        lines.append(f"发布编号: {result['release_id']}")
+        lines.append("")
+
+        if not result.get("success"):
+            lines.append(f"❌ 核验失败: {result.get('error', '未知错误')}")
+            return "\n".join(lines)
+
+        if result.get("note"):
+            lines.append(f"ℹ  {result['note']}")
+            return "\n".join(lines)
+
+        lines.append(f"总审计记录数: {result['total_records']} 条")
+        lines.append(f"哈希链完整性: {'✅ 完整' if result['hash_chain_valid'] else '❌ 存在问题'}")
+        lines.append("")
+
+        lines.append("【操作类型统计】")
+        if result.get("operation_counts"):
+            for op, count in sorted(result["operation_counts"].items()):
+                lines.append(f"  {op:<30} {count:>3} 次")
+        else:
+            lines.append("  暂无统计数据")
+        lines.append("")
+
+        lines.append("【时间线与哈希校验】")
+        lines.append(f"  {'序':<4} {'时间':<27} {'操作类型':<22} {'哈希状态':<10} 问题")
+        lines.append("-" * 80)
+
+        records = result.get("records", [])
+        for i, rec in enumerate(records, 1):
+            op = rec.get("operation_type", "")[:22]
+            ts = rec.get("created_at", "")[:27]
+
+            hash_status = "✅"
+            issue_text = ""
+            for mm in result.get("mismatches", []):
+                if mm.get("index") == i:
+                    hash_status = "❌"
+                    issue_text = mm["issue"]
+                    break
+
+            for g in result.get("gaps", []):
+                if g.get("index") == i:
+                    issue_text = g["issue"]
+                    break
+
+            lines.append(f"  {i:<4} {ts:<27} {op:<22} {hash_status:<10} {issue_text}")
+
+        lines.append("-" * 80)
+        lines.append("")
+
+        if result.get("mismatches"):
+            lines.append(f"❌ 发现 {len(result['mismatches'])} 处哈希链问题:")
+            for i, mm in enumerate(result["mismatches"], 1):
+                lines.append(f"  [{i}] 第{mm['index']}条 ({mm['operation']}): {mm['issue']}")
+            lines.append("")
+
+        if result.get("gaps"):
+            lines.append(f"⚠  发现 {len(result['gaps'])} 处时间线问题:")
+            for i, g in enumerate(result["gaps"], 1):
+                lines.append(f"  [{i}] {g['issue']}")
+            lines.append("")
+
+        if result.get("hash_chain_valid") and not result.get("gaps"):
+            lines.append("✅ 审计记录完整，哈希链连续，无时间异常。")
+        elif not result.get("hash_chain_valid") or result.get("gaps"):
+            lines.append("⚠  审计记录存在问题，请核查。")
+
+        lines.append("")
+        lines.append("=" * 80)
+
+        return "\n".join(lines)
+
+    def compare_releases(self, release_id_a: str, release_id_b: str) -> Dict[str, Any]:
+        rel_a = self.get_release(release_id_a)
+        rel_b = self.get_release(release_id_b)
+
+        if not rel_a or not rel_b:
+            missing = []
+            if not rel_a:
+                missing.append(release_id_a)
+            if not rel_b:
+                missing.append(release_id_b)
+            return {
+                "success": False,
+                "error": f"发布编号不存在: {', '.join(missing)}",
+                "missing": missing
+            }
+
+        stats_a = rel_a.get("_stats", {})
+        stats_b = rel_b.get("_stats", {})
+
+        approval_a = rel_a.get("approval_flow", {})
+        approval_b = rel_b.get("approval_flow", {})
+
+        def calc_approval_duration(flow):
+            if not flow or not flow.get("nodes"):
+                return None
+            nodes = flow.get("nodes", [])
+            first_activated = None
+            last_approved = None
+            for n in nodes:
+                if n.get("activated_at") and (first_activated is None or n["activated_at"] < first_activated):
+                    first_activated = n["activated_at"]
+                if n.get("approved_at") and (last_approved is None or n["approved_at"] > last_approved):
+                    last_approved = n["approved_at"]
+            if first_activated and last_approved:
+                from datetime import datetime
+                try:
+                    dt1 = datetime.fromisoformat(first_activated)
+                    dt2 = datetime.fromisoformat(last_approved)
+                    hours = (dt2 - dt1).total_seconds() / 3600
+                    return round(hours, 2)
+                except Exception:
+                    return None
+            return None
+
+        gray_a = rel_a.get("gray_plan", {})
+        gray_b = rel_b.get("gray_plan", {})
+
+        def count_something(plan, key):
+            if not plan or not plan.get("batches"):
+                return 0
+            total = 0
+            for b in plan.get("batches", []):
+                if key == "fuse_events":
+                    total += len(b.get("fuse_events", []))
+                elif key == "rollback":
+                    total += 1 if b.get("status") == "ROLLED_BACK" else 0
+                elif key == "monitor_cycles":
+                    cycles, _, _ = self._calc_monitor_stats(b)
+                    total += cycles
+            return total
+
+        def get_risk_level(rel):
+            try:
+                report_dir = self.config["storage"]["report_dir"]
+                report_json = os.path.join(report_dir, f"release_{rel['release_id']}_report.json")
+                if os.path.exists(report_json):
+                    with open(report_json, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    return data.get("conclusion", {}).get("risk_level", "N/A")
+            except Exception:
+                pass
+            validation = rel.get("validation_result", {})
+            if validation:
+                if validation.get("high_risk_count", 0) > 0:
+                    return "HIGH"
+                elif validation.get("medium_risk_count", 0) > 0:
+                    return "MEDIUM"
+                elif validation.get("low_risk_count", 0) > 0:
+                    return "LOW"
+                else:
+                    return "NONE"
+            return "N/A"
+
+        comparison = {
+            "success": True,
+            "release_a": {
+                "release_id": rel_a["release_id"],
+                "version": rel_a["version"],
+                "created_at": rel_a["created_at"],
+                "title": rel_a["title"],
+                "type": "Hotfix" if rel_a.get("is_hotfix") else "Normal",
+                "overall_status": rel_a["status"],
+                "approval_progress": stats_a.get("approval_progress", "N/A"),
+                "approval_duration_hours": calc_approval_duration(approval_a),
+                "gray_batches": stats_a.get("total_batches", 0),
+                "gray_current_batch": stats_a.get("current_batch", 0),
+                "monitor_cycles": count_something(gray_a, "monitor_cycles"),
+                "fuse_events": count_something(gray_a, "fuse_events"),
+                "rollback_count": count_something(gray_a, "rollback"),
+                "risk_level": get_risk_level(rel_a)
+            },
+            "release_b": {
+                "release_id": rel_b["release_id"],
+                "version": rel_b["version"],
+                "created_at": rel_b["created_at"],
+                "title": rel_b["title"],
+                "type": "Hotfix" if rel_b.get("is_hotfix") else "Normal",
+                "overall_status": rel_b["status"],
+                "approval_progress": stats_b.get("approval_progress", "N/A"),
+                "approval_duration_hours": calc_approval_duration(approval_b),
+                "gray_batches": stats_b.get("total_batches", 0),
+                "gray_current_batch": stats_b.get("current_batch", 0),
+                "monitor_cycles": count_something(gray_b, "monitor_cycles"),
+                "fuse_events": count_something(gray_b, "fuse_events"),
+                "rollback_count": count_something(gray_b, "rollback"),
+                "risk_level": get_risk_level(rel_b)
+            }
+        }
+
+        a = comparison["release_a"]
+        b = comparison["release_b"]
+        comparison["analysis"] = []
+
+        if a["approval_duration_hours"] and b["approval_duration_hours"]:
+            diff = a["approval_duration_hours"] - b["approval_duration_hours"]
+            if diff < 0:
+                comparison["analysis"].append(
+                    f"审批耗时: A比B快 {abs(diff):.2f} 小时 ✓"
+                )
+            elif diff > 0:
+                comparison["analysis"].append(
+                    f"审批耗时: A比B慢 {diff:.2f} 小时 ⚠"
+                )
+            else:
+                comparison["analysis"].append("审批耗时: 两者相同")
+
+        if a["fuse_events"] < b["fuse_events"]:
+            comparison["analysis"].append(
+                f"熔断次数: A({a['fuse_events']}次) 少于 B({b['fuse_events']}次) ✓"
+            )
+        elif a["fuse_events"] > b["fuse_events"]:
+            comparison["analysis"].append(
+                f"熔断次数: A({a['fuse_events']}次) 多于 B({b['fuse_events']}次) ⚠"
+            )
+        else:
+            comparison["analysis"].append(f"熔断次数: 两者相同 ({a['fuse_events']}次)")
+
+        if a["rollback_count"] < b["rollback_count"]:
+            comparison["analysis"].append(
+                f"回滚次数: A({a['rollback_count']}次) 少于 B({b['rollback_count']}次) ✓"
+            )
+        elif a["rollback_count"] > b["rollback_count"]:
+            comparison["analysis"].append(
+                f"回滚次数: A({a['rollback_count']}次) 多于 B({b['rollback_count']}次) ⚠"
+            )
+        else:
+            comparison["analysis"].append(f"回滚次数: 两者相同 ({a['rollback_count']}次)")
+
+        risk_map = {"NONE": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "N/A": -1}
+        ra = risk_map.get(a["risk_level"], -1)
+        rb = risk_map.get(b["risk_level"], -1)
+        if ra >= 0 and rb >= 0:
+            if ra < rb:
+                comparison["analysis"].append(
+                    f"风险等级: A({a['risk_level']}) 低于 B({b['risk_level']}) ✓"
+                )
+            elif ra > rb:
+                comparison["analysis"].append(
+                    f"风险等级: A({a['risk_level']}) 高于 B({b['risk_level']}) ⚠"
+                )
+            else:
+                comparison["analysis"].append(f"风险等级: 两者相同 ({a['risk_level']})")
+
+        return comparison
+
+    def get_compare_text(self, release_id_a: str, release_id_b: str) -> str:
+        result = self.compare_releases(release_id_a, release_id_b)
+
+        lines = []
+        lines.append("=" * 90)
+        lines.append("  CTMS 多版本发布对比分析")
+        lines.append("=" * 90)
+
+        if not result.get("success"):
+            lines.append(f"❌ 对比失败: {result.get('error', '未知错误')}")
+            return "\n".join(lines)
+
+        a = result["release_a"]
+        b = result["release_b"]
+
+        def fmt(val, unit=""):
+            if val is None:
+                return "N/A"
+            return f"{val}{unit}"
+
+        lines.append("")
+        lines.append(f"{'对比项':<25} {'A: ' + a['release_id'][:18]:<32} {'B: ' + b['release_id'][:18]:<32}")
+        lines.append("-" * 90)
+
+        lines.append(f"{'版本号':<25} {fmt(a['version']):<32} {fmt(b['version']):<32}")
+        lines.append(f"{'发布标题':<25} {a['title'][:30]:<32} {b['title'][:30]:<32}")
+        lines.append(f"{'发布类型':<25} {fmt(a['type']):<32} {fmt(b['type']):<32}")
+        lines.append(f"{'创建时间':<25} {a['created_at'][:30]:<32} {b['created_at'][:30]:<32}")
+        lines.append(f"{'整体状态':<25} {fmt(a['overall_status']):<32} {fmt(b['overall_status']):<32}")
+        lines.append(f"{'审批进度':<25} {fmt(a['approval_progress']):<32} {fmt(b['approval_progress']):<32}")
+        lines.append(f"{'审批耗时':<25} {fmt(a['approval_duration_hours'], 'h'):<32} {fmt(b['approval_duration_hours'], 'h'):<32}")
+        lines.append(f"{'灰度批次总数':<25} {fmt(a['gray_batches']):<32} {fmt(b['gray_batches']):<32}")
+        lines.append(f"{'当前批次':<25} {fmt(a['gray_current_batch']):<32} {fmt(b['gray_current_batch']):<32}")
+        lines.append(f"{'累计监控轮数':<25} {fmt(a['monitor_cycles'], '轮'):<32} {fmt(b['monitor_cycles'], '轮'):<32}")
+        lines.append(f"{'熔断总次数':<25} {fmt(a['fuse_events'], '次'):<32} {fmt(b['fuse_events'], '次'):<32}")
+        lines.append(f"{'回滚总次数':<25} {fmt(a['rollback_count'], '次'):<32} {fmt(b['rollback_count'], '次'):<32}")
+        lines.append(f"{'风险等级':<25} {fmt(a['risk_level']):<32} {fmt(b['risk_level']):<32}")
+        lines.append("-" * 90)
+        lines.append("")
+
+        lines.append("【对比分析结论】")
+        if result.get("analysis"):
+            for i, analysis in enumerate(result["analysis"], 1):
+                lines.append(f"  {i}. {analysis}")
+        else:
+            lines.append("  暂无对比分析")
+
+        lines.append("")
+        lines.append("=" * 90)
+        lines.append("  说明: ✓表示A更优, ⚠表示A需改进")
+        lines.append("=" * 90)
+
+        return "\n".join(lines)
+
     def get_snapshot_text(self, release_id: str) -> str:
         release = self.get_release(release_id)
         if not release:
@@ -785,6 +1187,420 @@ class ReleaseOrchestrator:
         lines.append("=" * 80)
         lines.append("  — 进度快照结束，请复制以上内容同步项目组 —")
         lines.append("=" * 80)
+
+        return "\n".join(lines)
+
+    def generate_sync_package(self, release_id: str, output_dir: str = None) -> Dict[str, Any]:
+        release = self.get_release(release_id)
+        if not release:
+            raise ValueError(f"发布编号不存在: {release_id}")
+
+        if not output_dir:
+            output_dir = os.path.join(self.config["storage"]["data_dir"], "sync_packages")
+        ensure_dir(output_dir)
+
+        stats = release.get("_stats", {})
+        gray_plan = release.get("gray_plan")
+        approval_flow = release.get("approval_flow")
+
+        package_data = {
+            "package_generated_at": get_now_iso(),
+            "release_overview": {
+                "release_id": release["release_id"],
+                "version": release["version"],
+                "project_id": release["project_id"],
+                "title": release["title"],
+                "description": release.get("description", "暂无"),
+                "release_type": "紧急Hotfix" if release.get("is_hotfix") else "常规发布",
+                "applicant": release["applicant"],
+                "created_at": release["created_at"],
+                "overall_status": release["status"],
+                "gray_stage": stats.get("gray_status", "暂无"),
+                "current_stage": release.get("current_stage", "暂无")
+            },
+            "approval_chain": {},
+            "gray_progress": {},
+            "monitor_summary": {},
+            "fuse_rollback": {},
+            "audit_timeline": [],
+            "postmortem_summary": {}
+        }
+
+        if approval_flow and approval_flow.get("nodes"):
+            nodes = []
+            for node in approval_flow["nodes"]:
+                nodes.append({
+                    "order": node["order"],
+                    "label": node["label"],
+                    "name": node["name"],
+                    "approver": node.get("approver", "暂无"),
+                    "status": node["status"],
+                    "approved_at": node.get("approved_at", "暂无"),
+                    "activated_at": node.get("activated_at", "暂无"),
+                    "comment": node.get("comment", "暂无"),
+                    "is_post_approval": node.get("is_post_approval", False)
+                })
+            package_data["approval_chain"] = {
+                "status": approval_flow.get("status", "暂无"),
+                "progress": stats.get("approval_progress", "0/0"),
+                "nodes": nodes
+            }
+        else:
+            package_data["approval_chain"] = {"status": "暂无", "progress": "0/0", "nodes": [], "note": "暂无审批链路数据"}
+
+        if gray_plan and gray_plan.get("batches"):
+            batches = []
+            total_cycles = 0
+            total_fuse = 0
+            for batch in gray_plan["batches"]:
+                cycles, n_metrics, n_records = self._calc_monitor_stats(batch)
+                total_cycles += cycles
+                total_fuse += len(batch.get("fuse_events", []))
+                fuse_events = []
+                for fe in batch.get("fuse_events", []):
+                    fuse_events.append({
+                        "fuse_level": fe.get("fuse_level"),
+                        "fuse_level_name": fe.get("fuse_level_name"),
+                        "trigger_time": fe.get("trigger_time"),
+                        "reasons": fe.get("reasons", [])
+                    })
+                batches.append({
+                    "batch_no": batch["batch_no"],
+                    "label": batch["label"],
+                    "level": batch.get("level", ""),
+                    "center_count": batch["center_count"],
+                    "status": batch["status"],
+                    "observation_hours": batch["observation_hours"],
+                    "release_time": batch.get("release_time", "暂无"),
+                    "observation_start_time": batch.get("observation_start_time", "暂无"),
+                    "monitor_cycles": cycles,
+                    "metric_types": n_metrics,
+                    "total_records": n_records,
+                    "fuse_events": fuse_events,
+                    "rollback_time": batch.get("rollback_time", "暂无"),
+                    "rollback_version": batch.get("rollback_version", "暂无")
+                })
+
+            package_data["gray_progress"] = {
+                "status": gray_plan.get("status", "暂无"),
+                "current_batch": stats.get("current_batch", 0),
+                "total_batches": stats.get("total_batches", 0),
+                "total_centers": gray_plan.get("total_centers", 0),
+                "released_centers": gray_plan.get("released_centers_count", 0),
+                "total_monitor_cycles": total_cycles,
+                "total_fuse_events": total_fuse,
+                "batches": batches
+            }
+        else:
+            package_data["gray_progress"] = {"note": "暂无灰度发布数据"}
+
+        if gray_plan and gray_plan.get("batches"):
+            monitor_data = {}
+            for batch in gray_plan["batches"]:
+                metrics = batch.get("monitor_metrics", [])
+                if metrics:
+                    latest_by_name = {}
+                    for m in metrics:
+                        name = m["metric_name"]
+                        if name not in latest_by_name or m["collected_at"] > latest_by_name[name]["collected_at"]:
+                            latest_by_name[name] = m
+                    monitor_data[f"batch_{batch['batch_no']}"] = {
+                        "batch_label": batch["label"],
+                        "latest_metrics": [
+                            {
+                                "name": m["metric_name"],
+                                "label": m["metric_label"],
+                                "value": m["metric_value"],
+                                "unit": m.get("unit", ""),
+                                "status": m["status"],
+                                "collected_at": m["collected_at"]
+                            } for m in sorted(latest_by_name.values(), key=lambda x: x["metric_name"])
+                        ]
+                    }
+            package_data["monitor_summary"] = monitor_data if monitor_data else {"note": "暂无监控数据"}
+        else:
+            package_data["monitor_summary"] = {"note": "暂无监控数据"}
+
+        fuse_events = []
+        rollback_events = []
+        if gray_plan and gray_plan.get("batches"):
+            for batch in gray_plan["batches"]:
+                for fe in batch.get("fuse_events", []):
+                    fuse_events.append({
+                        "batch_no": batch["batch_no"],
+                        "batch_label": batch["label"],
+                        "fuse_level": fe.get("fuse_level"),
+                        "fuse_level_name": fe.get("fuse_level_name"),
+                        "trigger_time": fe.get("trigger_time"),
+                        "reasons": fe.get("reasons", [])
+                    })
+                if batch.get("status") == "ROLLED_BACK":
+                    rollback_events.append({
+                        "batch_no": batch["batch_no"],
+                        "batch_label": batch["label"],
+                        "rollback_time": batch.get("rollback_time"),
+                        "rollback_version": batch.get("rollback_version"),
+                        "rollback_operator": batch.get("rollback_operator", "system")
+                    })
+
+        package_data["fuse_rollback"] = {
+            "total_fuse_events": len(fuse_events),
+            "total_rollback_events": len(rollback_events),
+            "fuse_events": fuse_events if fuse_events else [],
+            "rollback_events": rollback_events if rollback_events else [],
+            "note_fuse": "暂无熔断记录" if not fuse_events else "",
+            "note_rollback": "暂无回滚记录" if not rollback_events else ""
+        }
+
+        try:
+            audit_records = self.audit_logger.query(target_type="release", target_id=release_id)
+            for rec in audit_records:
+                op = rec.get("operation_type", "N/A")
+                result_status = "✓ 成功"
+                if "FAIL" in op or "REJECT" in op:
+                    result_status = "✗ 失败"
+                elif "FUSE" in op or "WARN" in op:
+                    result_status = "⚠ 告警"
+                elif "ROLLBACK" in op:
+                    result_status = "↺ 回滚"
+
+                remark = rec.get("remark", "")
+                after = rec.get("after_value", {})
+                if remark:
+                    detail = remark
+                elif after and isinstance(after, dict):
+                    parts = [f"{k}={v}" for k, v in list(after.items())[:3]]
+                    detail = ", ".join(parts)
+                else:
+                    detail = "无详情"
+
+                package_data["audit_timeline"].append({
+                    "seq": len(package_data["audit_timeline"]) + 1,
+                    "time": rec.get("created_at", ""),
+                    "operation_type": op,
+                    "operator": rec.get("operator", ""),
+                    "result": result_status,
+                    "detail": detail,
+                    "trace_id": rec.get("trace_id", "")
+                })
+        except Exception as e:
+            package_data["audit_timeline"] = [{"note": f"审计查询失败: {e}"}]
+
+        if not package_data["audit_timeline"]:
+            package_data["audit_timeline"] = [{"note": "暂无审计记录"}]
+
+        try:
+            report_text_path = os.path.join(
+                self.report_generator.report_dir,
+                f"release_{release_id}_report.txt"
+            )
+            if os.path.exists(report_text_path):
+                report_json_path = os.path.join(
+                    self.report_generator.report_dir,
+                    f"release_{release_id}_report.json"
+                )
+                if os.path.exists(report_json_path):
+                    with open(report_json_path, 'r', encoding='utf-8') as f:
+                        report_data = json.load(f)
+                    package_data["postmortem_summary"] = {
+                        "conclusion": report_data.get("conclusion", {}).get("overall_assessment", "暂无"),
+                        "risk_level": report_data.get("conclusion", {}).get("risk_level", "暂无"),
+                        "has_blocking_issues": report_data.get("conclusion", {}).get("has_blocking_issues", False),
+                        "recommendations": report_data.get("conclusion", {}).get("recommendations", []),
+                        "lessons_learned": report_data.get("conclusion", {}).get("lessons_learned", "暂无"),
+                        "report_generated": True
+                    }
+                else:
+                    with open(report_text_path, 'r', encoding='utf-8') as f:
+                        text = f.read()
+                    lines = text.split('\n')[:50]
+                    package_data["postmortem_summary"] = {
+                        "report_preview": "\n".join(lines),
+                        "report_generated": True,
+                        "note": "报告以文本预览方式提供"
+                    }
+            else:
+                package_data["postmortem_summary"] = {"note": "暂无复盘报告", "report_generated": False}
+        except Exception as e:
+            package_data["postmortem_summary"] = {"note": f"复盘报告读取失败: {e}", "report_generated": False}
+
+        md_content = self._package_to_markdown(package_data)
+
+        json_path = os.path.join(output_dir, f"sync_{release_id}.json")
+        md_path = os.path.join(output_dir, f"sync_{release_id}.md")
+
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(package_data, f, ensure_ascii=False, indent=2)
+
+        with open(md_path, 'w', encoding='utf-8') as f:
+            f.write(md_content)
+
+        return {
+            "success": True,
+            "release_id": release_id,
+            "json_path": json_path,
+            "markdown_path": md_path,
+            "output_dir": output_dir
+        }
+
+    def _package_to_markdown(self, pkg: Dict[str, Any]) -> str:
+        lines = []
+        lines.append(f"# CTMS 发布项目同步包")
+        lines.append("")
+        lines.append(f"> 生成时间: {pkg['package_generated_at']}")
+        lines.append(f"> 发布编号: {pkg['release_overview']['release_id']}")
+        lines.append(f"> 版本: {pkg['release_overview']['version']}")
+        lines.append("")
+
+        lines.append("## 1. 发布概览")
+        lines.append("")
+        ov = pkg["release_overview"]
+        lines.append("| 项目 | 内容 |")
+        lines.append("|------|------|")
+        lines.append(f"| 发布编号 | {ov['release_id']} |")
+        lines.append(f"| 版本号 | {ov['version']} |")
+        lines.append(f"| 项目编号 | {ov['project_id']} |")
+        lines.append(f"| 发布标题 | {ov['title']} |")
+        lines.append(f"| 发布描述 | {ov['description']} |")
+        lines.append(f"| 发布类型 | {ov['release_type']} |")
+        lines.append(f"| 申请人 | {ov['applicant']} |")
+        lines.append(f"| 创建时间 | {ov['created_at']} |")
+        lines.append(f"| 整体状态 | {ov['overall_status']} |")
+        lines.append(f"| 灰度阶段 | {ov['gray_stage']} |")
+        lines.append(f"| 当前阶段 | {ov['current_stage']} |")
+        lines.append("")
+
+        lines.append("## 2. 审批链路")
+        lines.append("")
+        ac = pkg["approval_chain"]
+        lines.append(f"- 审批状态: **{ac['status']}**")
+        lines.append(f"- 审批进度: **{ac['progress']}**")
+        lines.append("")
+        if ac.get("nodes"):
+            lines.append("| 序号 | 节点 | 审批人 | 状态 | 审批时间 | 意见 |")
+            lines.append("|------|------|--------|------|----------|------|")
+            for node in ac["nodes"]:
+                status_icon = {"PENDING": "▶待办", "APPROVED": "✓通过", "REJECTED": "✗拒绝",
+                               "POST_APPROVED": "✓补签", "NOT_STARTED": "○未启动"}.get(node["status"], node["status"])
+                lines.append(f"| {node['order']} | {node['label']} | {node['approver']} | {status_icon} | {node['approved_at']} | {node['comment']} |")
+        else:
+            lines.append("> 暂无审批链路数据")
+        lines.append("")
+
+        lines.append("## 3. 灰度进度")
+        lines.append("")
+        gp = pkg["gray_progress"]
+        if "note" in gp:
+            lines.append(f"> {gp['note']}")
+        else:
+            lines.append(f"- 灰度状态: **{gp['status']}**")
+            lines.append(f"- 批次进度: 第{gp['current_batch']}批 / 共{gp['total_batches']}批")
+            lines.append(f"- 中心总数: {gp['total_centers']} 个")
+            lines.append(f"- 已发布中心: {gp['released_centers']} 个")
+            lines.append(f"- 累计监控轮数: {gp['total_monitor_cycles']} 轮")
+            lines.append(f"- 累计熔断次数: {gp['total_fuse_events']} 次")
+            lines.append("")
+            lines.append("### 批次详情")
+            lines.append("")
+            lines.append("| 批次 | 类型 | 中心数 | 状态 | 发布时间 | 监控轮数 | 熔断 | 回滚 |")
+            lines.append("|------|------|--------|------|----------|----------|------|------|")
+            for b in gp["batches"]:
+                fuse_icon = f"⚠{len(b['fuse_events'])}次" if b["fuse_events"] else "-"
+                rollback_icon = "✗已回滚" if b["status"] == "ROLLED_BACK" else "-"
+                lines.append(f"| {b['batch_no']} | {b['label']} | {b['center_count']} | {b['status']} | {b['release_time']} | {b['monitor_cycles']}轮 | {fuse_icon} | {rollback_icon} |")
+        lines.append("")
+
+        lines.append("## 4. 监控摘要")
+        lines.append("")
+        ms = pkg["monitor_summary"]
+        if "note" in ms:
+            lines.append(f"> {ms['note']}")
+        else:
+            for batch_key, batch_data in ms.items():
+                lines.append(f"### {batch_data['batch_label']}")
+                lines.append("")
+                lines.append("| 指标 | 标签 | 最新值 | 状态 | 采集时间 |")
+                lines.append("|------|------|--------|------|----------|")
+                for m in batch_data["latest_metrics"]:
+                    status_icon = {"NORMAL": "✓", "WARN": "!", "FUSE": "✗"}.get(m["status"], "?")
+                    lines.append(f"| {m['name']} | {m['label']} | {m['value']}{m['unit']} | {status_icon} {m['status']} | {m['collected_at']} |")
+                lines.append("")
+        lines.append("")
+
+        lines.append("## 5. 熔断与回滚")
+        lines.append("")
+        fr = pkg["fuse_rollback"]
+        lines.append(f"- 累计熔断次数: **{fr['total_fuse_events']}** 次")
+        lines.append(f"- 累计回滚次数: **{fr['total_rollback_events']}** 次")
+        lines.append("")
+        if fr["fuse_events"]:
+            lines.append("### 熔断记录")
+            lines.append("")
+            lines.append("| 批次 | 级别 | 触发时间 | 触发指标 |")
+            lines.append("|------|------|----------|----------|")
+            for fe in fr["fuse_events"]:
+                reasons = ", ".join([f"{r['metric']}={r['value']}" for r in fe["reasons"][:2]])
+                lines.append(f"| {fe['batch_no']} | {fe['fuse_level_name']} | {fe['trigger_time']} | {reasons} |")
+            lines.append("")
+        else:
+            lines.append("> 暂无熔断记录")
+            lines.append("")
+
+        if fr["rollback_events"]:
+            lines.append("### 回滚记录")
+            lines.append("")
+            lines.append("| 批次 | 回滚时间 | 回滚版本 | 操作者 |")
+            lines.append("|------|----------|----------|--------|")
+            for re_ev in fr["rollback_events"]:
+                lines.append(f"| {re_ev['batch_no']} | {re_ev['rollback_time']} | {re_ev['rollback_version']} | {re_ev['rollback_operator']} |")
+            lines.append("")
+        else:
+            lines.append("> 暂无回滚记录")
+            lines.append("")
+
+        lines.append("## 6. 审计时间线")
+        lines.append("")
+        at = pkg["audit_timeline"]
+        if at and "note" not in at[0]:
+            lines.append("| 序号 | 时间 | 操作 | 操作者 | 结果 | 详情 |")
+            lines.append("|------|------|------|--------|------|------|")
+            for rec in at:
+                lines.append(f"| {rec['seq']} | {rec['time']} | {rec['operation_type']} | {rec['operator']} | {rec['result']} | {rec['detail']} |")
+        else:
+            note = at[0]["note"] if at else "暂无审计记录"
+            lines.append(f"> {note}")
+        lines.append("")
+
+        lines.append("## 7. 复盘报告摘要")
+        lines.append("")
+        ps = pkg["postmortem_summary"]
+        if ps.get("report_generated"):
+            if "conclusion" in ps:
+                lines.append(f"- 总体评估: **{ps['conclusion']}**")
+                lines.append(f"- 风险等级: **{ps['risk_level']}**")
+                lines.append(f"- 阻塞性问题: {'是' if ps['has_blocking_issues'] else '否'}")
+                lines.append("")
+                if ps.get("recommendations"):
+                    lines.append("### 改进建议")
+                    lines.append("")
+                    for i, rec in enumerate(ps["recommendations"], 1):
+                        lines.append(f"{i}. {rec}")
+                    lines.append("")
+                lines.append(f"### 经验教训")
+                lines.append("")
+                lines.append(f"> {ps['lessons_learned']}")
+            else:
+                lines.append("```")
+                lines.append(ps.get("report_preview", "暂无报告预览"))
+                lines.append("```")
+        else:
+            lines.append(f"> {ps.get('note', '暂无复盘报告')}")
+        lines.append("")
+
+        lines.append("---")
+        lines.append("")
+        lines.append("> 本同步包由 CTMS 发布平台自动生成，包含发布审批流程的完整记录。")
+        lines.append("> 如需进一步了解详情，请使用 `python release_orchestrator.py --release-id <编号> --all-status` 查询。")
 
         return "\n".join(lines)
 
@@ -1216,6 +2032,13 @@ def main():
     query_group.add_argument("--snapshot", action="store_true", help="导出进度快照（适合复制同步项目组）")
     query_group.add_argument("--timeline", action="store_true", help="查看合规时间线（串联关键操作流水）")
 
+    audit_group = parser.add_argument_group("审计核验命令")
+    audit_group.add_argument("--audit-verify", action="store_true", help="审计完整性核验（哈希链+时间线+操作统计）")
+    audit_group.add_argument("--compare", nargs=2, metavar=("REL-A", "REL-B"),
+                            help="多版本对比（传入两个发布编号）")
+    audit_group.add_argument("--sync-package", action="store_true", help="导出项目同步包（Markdown + JSON双格式）")
+    audit_group.add_argument("--sync-output-dir", help="同步包输出目录（默认 data/sync_packages/）")
+
     args = parser.parse_args()
 
     if args.demo:
@@ -1328,6 +2151,33 @@ def main():
 
     if args.release_id and args.timeline:
         print(orchestrator.get_timeline_text(args.release_id))
+        return
+
+    if args.release_id and args.sync_package:
+        output_dir = getattr(args, "sync_output_dir", None) or None
+        result = orchestrator.generate_sync_package(
+            args.release_id, output_dir=output_dir
+        )
+        if result.get("success"):
+            print("✅ 项目同步包已生成：")
+            print(f"  Markdown: {result['markdown_path']}")
+            print(f"  JSON:     {result['json_path']}")
+            print("")
+            print("（两份文件内容一致，可直接转发项目组或归档使用）")
+        return
+
+    if args.release_id and args.audit_verify:
+        release = orchestrator.get_release(args.release_id)
+        if not release:
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
+            return
+        print(orchestrator.get_audit_verify_text(args.release_id))
+        return
+
+    if args.compare:
+        rel_a, rel_b = args.compare
+        print(orchestrator.get_compare_text(rel_a, rel_b))
         return
 
     if args.release_id and args.all_status:

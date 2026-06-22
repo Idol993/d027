@@ -1,0 +1,328 @@
+{
+  "package_generated_at": "2026-06-22T13:45:46.948251",
+  "release_overview": {
+    "release_id": "REL-20260622-DD0A63",
+    "version": "2.3.0",
+    "project_id": "CT-2024-001",
+    "title": "CTMS V2.3.0 功能迭代发布",
+    "description": "新增受试者随访管理模块，优化EDC数据同步性能",
+    "release_type": "常规发布",
+    "applicant": "dev_li",
+    "created_at": "2026-06-22T13:44:44.074092",
+    "overall_status": "GRAYING",
+    "gray_stage": "OBSERVING",
+    "current_stage": "gray_release"
+  },
+  "approval_chain": {
+    "status": "APPROVED",
+    "progress": "4/4",
+    "nodes": [
+      {
+        "order": 1,
+        "label": "临床审批",
+        "name": "clinical",
+        "approver": "dr_zhang",
+        "status": "APPROVED",
+        "approved_at": "2026-06-22T13:44:44.079935",
+        "activated_at": "2026-06-22T13:44:44.077565",
+        "comment": "经评估，本次发布不涉及受试者安全风险，方案执行无影响。",
+        "is_post_approval": false
+      },
+      {
+        "order": 2,
+        "label": "数据审批",
+        "name": "data",
+        "approver": "dm_li",
+        "status": "APPROVED",
+        "approved_at": "2026-06-22T13:44:44.081993",
+        "activated_at": "2026-06-22T13:44:44.079944",
+        "comment": "数据迁移方案已评审，EDC同步接口兼容性验证通过。",
+        "is_post_approval": false
+      },
+      {
+        "order": 3,
+        "label": "质控审批",
+        "name": "qa",
+        "approver": "qa_wang",
+        "status": "APPROVED",
+        "approved_at": "2026-06-22T13:44:44.083978",
+        "activated_at": "2026-06-22T13:44:44.082000",
+        "comment": "GCP合规性评估通过，TMF文档已同步更新。",
+        "is_post_approval": false
+      },
+      {
+        "order": 4,
+        "label": "PM审批",
+        "name": "pm",
+        "approver": "pm_chen",
+        "status": "APPROVED",
+        "approved_at": "2026-06-22T13:44:44.086332",
+        "activated_at": "2026-06-22T13:44:44.083985",
+        "comment": "发布窗口确认，资源协调到位，同意发布。",
+        "is_post_approval": false
+      }
+    ]
+  },
+  "gray_progress": {
+    "status": "OBSERVING",
+    "current_batch": 1,
+    "total_batches": 3,
+    "total_centers": 25,
+    "released_centers": 0,
+    "total_monitor_cycles": 5,
+    "total_fuse_events": 1,
+    "batches": [
+      {
+        "batch_no": 1,
+        "label": "非核心/低入组中心",
+        "level": "non_core",
+        "center_count": 9,
+        "status": "OBSERVING",
+        "observation_hours": 4,
+        "release_time": "2026-06-22T13:44:44.091988",
+        "observation_start_time": "2026-06-22T13:44:44.095081",
+        "monitor_cycles": 5,
+        "metric_types": 5,
+        "total_records": 25,
+        "fuse_events": [
+          {
+            "fuse_level": 1,
+            "fuse_level_name": "一级熔断（预警）",
+            "trigger_time": "2026-06-22T13:44:44.110070",
+            "reasons": [
+              {
+                "metric": "录入延迟率",
+                "value": 12.0,
+                "threshold": 10.0,
+                "level": "warn"
+              }
+            ]
+          }
+        ],
+        "rollback_time": null,
+        "rollback_version": "暂无"
+      },
+      {
+        "batch_no": 2,
+        "label": "常规临床中心",
+        "level": "regular",
+        "center_count": 13,
+        "status": "PENDING",
+        "observation_hours": 8,
+        "release_time": null,
+        "observation_start_time": "暂无",
+        "monitor_cycles": 0,
+        "metric_types": 0,
+        "total_records": 0,
+        "fuse_events": [],
+        "rollback_time": null,
+        "rollback_version": "暂无"
+      },
+      {
+        "batch_no": 3,
+        "label": "核心枢纽/高入组中心",
+        "level": "core",
+        "center_count": 3,
+        "status": "PENDING",
+        "observation_hours": 24,
+        "release_time": null,
+        "observation_start_time": "暂无",
+        "monitor_cycles": 0,
+        "metric_types": 0,
+        "total_records": 0,
+        "fuse_events": [],
+        "rollback_time": null,
+        "rollback_version": "暂无"
+      }
+    ]
+  },
+  "monitor_summary": {
+    "batch_1": {
+      "batch_label": "非核心/低入组中心",
+      "latest_metrics": [
+        {
+          "name": "approval_block_rate",
+          "label": "审批阻塞率",
+          "value": 5.51,
+          "unit": "%",
+          "status": "NORMAL",
+          "collected_at": "2026-06-22T13:44:44.118764"
+        },
+        {
+          "name": "data_anomaly_rate",
+          "label": "数据异常率",
+          "value": 0.88,
+          "unit": "%",
+          "status": "NORMAL",
+          "collected_at": "2026-06-22T13:44:44.118764"
+        },
+        {
+          "name": "entry_delay_rate",
+          "label": "录入延迟率",
+          "value": 4.2,
+          "unit": "%",
+          "status": "NORMAL",
+          "collected_at": "2026-06-22T13:44:44.118764"
+        },
+        {
+          "name": "login_success_rate",
+          "label": "登录成功率",
+          "value": 99.7,
+          "unit": "%",
+          "status": "NORMAL",
+          "collected_at": "2026-06-22T13:44:44.118764"
+        },
+        {
+          "name": "system_error_rate",
+          "label": "系统错误率",
+          "value": 0.33,
+          "unit": "%",
+          "status": "NORMAL",
+          "collected_at": "2026-06-22T13:44:44.118764"
+        }
+      ]
+    }
+  },
+  "fuse_rollback": {
+    "total_fuse_events": 1,
+    "total_rollback_events": 0,
+    "fuse_events": [
+      {
+        "batch_no": 1,
+        "batch_label": "非核心/低入组中心",
+        "fuse_level": 1,
+        "fuse_level_name": "一级熔断（预警）",
+        "trigger_time": "2026-06-22T13:44:44.110070",
+        "reasons": [
+          {
+            "metric": "录入延迟率",
+            "value": 12.0,
+            "threshold": 10.0,
+            "level": "warn"
+          }
+        ]
+      }
+    ],
+    "rollback_events": [],
+    "note_fuse": "",
+    "note_rollback": "暂无回滚记录"
+  },
+  "audit_timeline": [
+    {
+      "seq": 1,
+      "time": "2026-06-22T13:44:44.074425",
+      "operation_type": "RELEASE_CREATED",
+      "operator": "dev_li",
+      "result": "✓ 成功",
+      "detail": "创建发布申请: CTMS V2.3.0 功能迭代发布",
+      "trace_id": "e9cf4df6d29e473bb61d16fe11afe7ad"
+    },
+    {
+      "seq": 2,
+      "time": "2026-06-22T13:44:44.076583",
+      "operation_type": "VALIDATION_COMPLETED",
+      "operator": "system",
+      "result": "✓ 成功",
+      "detail": "前置校验完成：通过",
+      "trace_id": "64459a4b7fbe4e519fea01500edd9f4c"
+    },
+    {
+      "seq": 3,
+      "time": "2026-06-22T13:44:44.077825",
+      "operation_type": "APPROVAL_FLOW_CREATED",
+      "operator": "dev_li",
+      "result": "✓ 成功",
+      "detail": "创建NORMAL审批流，共4个审批节点",
+      "trace_id": "05a930e92e13449295ae7618a44f8ef9"
+    },
+    {
+      "seq": 4,
+      "time": "2026-06-22T13:44:44.080244",
+      "operation_type": "APPROVAL_NODE_APPROVED",
+      "operator": "dr_zhang",
+      "result": "✓ 成功",
+      "detail": "审批通过: 临床审批",
+      "trace_id": "d3183ba8bedf44e7a281907fa6128198"
+    },
+    {
+      "seq": 5,
+      "time": "2026-06-22T13:44:44.082287",
+      "operation_type": "APPROVAL_NODE_APPROVED",
+      "operator": "dm_li",
+      "result": "✓ 成功",
+      "detail": "审批通过: 数据审批",
+      "trace_id": "7abab4caba5b46e5a5fad814d3f1f210"
+    },
+    {
+      "seq": 6,
+      "time": "2026-06-22T13:44:44.084281",
+      "operation_type": "APPROVAL_NODE_APPROVED",
+      "operator": "qa_wang",
+      "result": "✓ 成功",
+      "detail": "审批通过: 质控审批",
+      "trace_id": "82a636a50330407482e38d8ecdfff890"
+    },
+    {
+      "seq": 7,
+      "time": "2026-06-22T13:44:44.086645",
+      "operation_type": "APPROVAL_NODE_APPROVED",
+      "operator": "pm_chen",
+      "result": "✓ 成功",
+      "detail": "审批通过: PM审批",
+      "trace_id": "73faef178c26453485c8c4232a238a58"
+    },
+    {
+      "seq": 8,
+      "time": "2026-06-22T13:44:44.090046",
+      "operation_type": "GRAY_PLAN_CREATED",
+      "operator": "system",
+      "result": "✓ 成功",
+      "detail": "灰度发布计划创建完成，共3批次，25个中心",
+      "trace_id": "73c985a77ac047cea8b399cfcedf7397"
+    },
+    {
+      "seq": 9,
+      "time": "2026-06-22T13:44:44.092319",
+      "operation_type": "GRAY_BATCH_STARTED",
+      "operator": "system",
+      "result": "✓ 成功",
+      "detail": "第1批次灰度发布开始，9个中心",
+      "trace_id": "1396801a07a94bb8a8aef6cc9815a45d"
+    },
+    {
+      "seq": 10,
+      "time": "2026-06-22T13:44:44.095479",
+      "operation_type": "GRAY_BATCH_RELEASE_COMPLETED",
+      "operator": "system",
+      "result": "✓ 成功",
+      "detail": "第1批次发布完成，进入观察期",
+      "trace_id": "8ab514da50914124bbdd3eaffc2767a4"
+    },
+    {
+      "seq": 11,
+      "time": "2026-06-22T13:44:44.111589",
+      "operation_type": "FUSE_TRIGGERED",
+      "operator": "system",
+      "result": "⚠ 告警",
+      "detail": "熔断触发: 一级熔断（预警）",
+      "trace_id": "8081fb3ce2b34a2d96fe9d9f5b5b473b"
+    },
+    {
+      "seq": 12,
+      "time": "2026-06-22T13:44:44.125225",
+      "operation_type": "RELEASE_REPORT_GENERATED",
+      "operator": "system",
+      "result": "✓ 成功",
+      "detail": "发布复盘报告生成完成",
+      "trace_id": "f50f5ae90ad34b36888405202d3b1ade"
+    }
+  ],
+  "postmortem_summary": {
+    "conclusion": "暂无",
+    "risk_level": "暂无",
+    "has_blocking_issues": false,
+    "recommendations": [],
+    "lessons_learned": "暂无",
+    "report_generated": true
+  }
+}
