@@ -96,12 +96,13 @@ class ApprovalWorkflow:
                 "label": node_cfg["label"],
                 "role": node_cfg["role"],
                 "approver": approver,
-                "status": ApprovalStatus.PENDING,
+                "status": "NOT_STARTED",
                 "timeout_hours": node_cfg["timeout_hours"],
                 "comment": None,
                 "approved_at": None,
                 "delegated_to": None,
-                "is_post_approval": False
+                "is_post_approval": False,
+                "activated_at": None
             }
             nodes.append(node)
 
@@ -149,18 +150,53 @@ class ApprovalWorkflow:
         }
         return role_map.get(role, f"user_{role}")
 
+    def _get_current_pending_node(self, flow: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if flow["release_type"] == ReleaseType.NORMAL:
+            for node in flow["nodes"]:
+                if node["status"] == ApprovalStatus.PENDING:
+                    return node
+            return None
+        else:
+            pending = [n for n in flow["nodes"] if n["status"] == ApprovalStatus.PENDING]
+            return pending[0] if pending else None
+
     def approve(self, release_id: str, node_name: str, approver: str,
                 comment: str = None, is_post_approval: bool = False) -> Dict[str, Any]:
         flow = self._load_approval_flow(release_id)
         if not flow:
             raise ValueError(f"审批流不存在: {release_id}")
 
+        if flow["status"] == "APPROVED":
+            raise ValueError("审批流已全部通过，无需重复审批")
+        if flow["status"] == "REJECTED":
+            raise ValueError("审批流已被驳回，无法继续审批")
+
         node = next((n for n in flow["nodes"] if n["name"] == node_name), None)
         if not node:
             raise ValueError(f"审批节点不存在: {node_name}")
 
-        if node["status"] not in [ApprovalStatus.PENDING]:
-            raise ValueError(f"节点状态不允许审批: {node['status']}")
+        if flow["release_type"] == ReleaseType.NORMAL:
+            if node["status"] == "NOT_STARTED":
+                current_node = self._get_current_pending_node(flow)
+                prev_nodes = [n for n in flow["nodes"] if n["order"] < node["order"]]
+                pending_prev = [n for n in prev_nodes
+                                if n["status"] not in [ApprovalStatus.APPROVED, ApprovalStatus.POST_APPROVED]]
+                msg = (
+                    f"无法审批【{node['label']}】节点："
+                    f"当前轮不到该节点处理。\n"
+                    f"  当前待审批节点：{current_node['label'] if current_node else '无'}（审批人：{current_node['approver'] if current_node else 'N/A'}）\n"
+                    f"  尚未通过的前置节点：{', '.join([n['label'] for n in pending_prev]) if pending_prev else '无'}\n"
+                    f"  请按顺序完成：临床审批 → 数据审批 → 质控审批 → PM审批"
+                )
+                raise PermissionError(msg)
+
+        if node["status"] == ApprovalStatus.APPROVED:
+            raise ValueError(f"节点【{node['label']}】已审批通过，无需重复审批")
+        if node["status"] == ApprovalStatus.REJECTED:
+            raise ValueError(f"节点【{node['label']}】已被驳回，无法审批")
+
+        if node["status"] != ApprovalStatus.PENDING:
+            raise ValueError(f"节点【{node['label']}】当前状态为 {node['status']}，不允许审批")
 
         old_status = node["status"]
         node["status"] = ApprovalStatus.POST_APPROVED if is_post_approval else ApprovalStatus.APPROVED
@@ -198,9 +234,28 @@ class ApprovalWorkflow:
         if not flow:
             raise ValueError(f"审批流不存在: {release_id}")
 
+        if flow["status"] == "APPROVED":
+            raise ValueError("审批流已全部通过，无法驳回")
+        if flow["status"] == "REJECTED":
+            raise ValueError("审批流已被驳回，无需重复操作")
+
         node = next((n for n in flow["nodes"] if n["name"] == node_name), None)
         if not node:
             raise ValueError(f"审批节点不存在: {node_name}")
+
+        if flow["release_type"] == ReleaseType.NORMAL:
+            if node["status"] == "NOT_STARTED":
+                current_node = self._get_current_pending_node(flow)
+                msg = (
+                    f"无法驳回【{node['label']}】节点："
+                    f"当前轮不到该节点处理。\n"
+                    f"  当前待审批节点：{current_node['label'] if current_node else '无'}（审批人：{current_node['approver'] if current_node else 'N/A'}）\n"
+                    f"  请按顺序完成：临床审批 → 数据审批 → 质控审批 → PM审批"
+                )
+                raise PermissionError(msg)
+
+        if node["status"] != ApprovalStatus.PENDING:
+            raise ValueError(f"节点【{node['label']}】当前状态为 {node['status']}，无法驳回")
 
         old_status = node["status"]
         node["status"] = ApprovalStatus.REJECTED
