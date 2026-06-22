@@ -1,0 +1,158 @@
+release:
+  version: "1.0.0"
+  release_no_prefix: "REL"
+  cache_ttl_seconds: 1800
+
+validation:
+  subject_sync_success_rate_threshold: 99.5
+  subject_field_match_threshold: 100
+  open_queries_allowed: 0
+  milestone_deviation_days: 3
+  budget_deviation_percent: 15
+  center_stall_days: 30
+  sae_unreported_allowed: 0
+
+approval:
+  normal:
+    nodes:
+      - order: 1
+        name: "clinical"
+        label: "临床审批"
+        role: "clinical_reviewer"
+        timeout_hours: 24
+      - order: 2
+        name: "data"
+        label: "数据审批"
+        role: "data_manager"
+        timeout_hours: 24
+      - order: 3
+        name: "qa"
+        label: "质控审批"
+        role: "qa_specialist"
+        timeout_hours: 24
+      - order: 4
+        name: "pm"
+        label: "PM审批"
+        role: "project_manager"
+        timeout_hours: 24
+  hotfix:
+    parallel: true
+    timeout_hours: 2
+    allow_post_approval: true
+    post_approval_hours: 72
+
+gray_release:
+  batches:
+    - level: "non_core"
+      label: "非核心/低入组中心"
+      order: 1
+      enrolling_threshold: 10
+      ratio: 0.15
+      observation_hours: 4
+    - level: "regular"
+      label: "常规临床中心"
+      order: 2
+      enrolling_min: 10
+      enrolling_max: 50
+      ratio: 0.40
+      observation_hours: 8
+    - level: "core"
+      label: "核心枢纽/高入组中心"
+      order: 3
+      enrolling_threshold: 50
+      ratio: 0.45
+      observation_hours: 24
+
+monitor:
+  collect_interval_minutes: 5
+  metrics:
+    - name: "data_anomaly_rate"
+      label: "数据异常率"
+      warn_threshold: 2.0
+      fuse_threshold: 5.0
+      unit: "%"
+    - name: "entry_delay_rate"
+      label: "录入延迟率"
+      warn_threshold: 10.0
+      fuse_threshold: 20.0
+      unit: "%"
+    - name: "approval_block_rate"
+      label: "审批阻塞率"
+      warn_threshold: 15.0
+      fuse_threshold: 30.0
+      unit: "%"
+    - name: "system_error_rate"
+      label: "系统错误率"
+      warn_threshold: 1.0
+      fuse_threshold: 3.0
+      unit: "%"
+    - name: "login_success_rate"
+      label: "登录成功率"
+      warn_threshold: 98.0
+      fuse_threshold: 95.0
+      unit: "%"
+      reverse: true
+
+fuse:
+  levels:
+    - level: 1
+      name: "warn"
+      label: "一级熔断（预警）"
+      trigger_condition: "single_warn"
+      action: "pause_next_batch"
+    - level: 2
+      name: "partial_rollback"
+      label: "二级熔断（部分回滚）"
+      trigger_condition: "single_fuse_2cycles"
+      action: "rollback_current_batch"
+    - level: 3
+      name: "full_rollback"
+      label: "三级熔断（全量回滚）"
+      trigger_condition: "multi_fuse_or_p0"
+      action: "rollback_all"
+  continuous_cycles_for_fuse: 2
+
+audit:
+  log_retention:
+    release_operation: "permanent"
+    approval_operation: "permanent"
+    validation_operation: "5_years"
+    gray_operation: "5_years"
+    fuse_rollback: "permanent"
+    config_change: "permanent"
+  hash_chain: true
+
+storage:
+  data_dir: "./data"
+  audit_dir: "./data/audit"
+  report_dir: "./data/reports"
+  release_dir: "./data/releases"
+
+external_systems:
+  edc:
+    base_url: "https://edc.example.com/api"
+    api_key: "${EDC_API_KEY}"
+    timeout_seconds: 30
+  ethics:
+    base_url: "https://ethics.example.com/api"
+    api_key: "${ETHICS_API_KEY}"
+    timeout_seconds: 30
+  tmf:
+    base_url: "https://tmf.example.com/api"
+    api_key: "${TMF_API_KEY}"
+    timeout_seconds: 30
+  notification:
+    email:
+      smtp_host: "smtp.example.com"
+      smtp_port: 587
+      sender: "ctms-release@example.com"
+    wechat:
+      webhook_url: "${WECHAT_WEBHOOK_URL}"
+
+notifications:
+  on_blocked: true
+  on_approval_pending: true
+  on_approval_timeout: true
+  on_fuse_triggered: true
+  on_release_completed: true
+  on_rollback_completed: true

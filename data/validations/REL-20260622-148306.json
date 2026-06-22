@@ -1,0 +1,206 @@
+{
+  "release_id": "REL-20260622-148306",
+  "project_id": "CT-2024-001",
+  "version": "2.3.0",
+  "checked_at": "2026-06-22T05:55:06.791764",
+  "dimensions": {
+    "subject_data": {
+      "dimension": "subject_data",
+      "label": "受试者数据",
+      "checks": [
+        {
+          "check_item": "edc_ctms_sync_status",
+          "label": "EDC-CTMS 数据同步状态",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "success_rate": 99.8,
+            "threshold": 99.5,
+            "total_syncs": 1250,
+            "failed_syncs": 3,
+            "period_hours": 24
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "subject_field_consistency",
+          "label": "受试者关键字段一致性",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "match_rate": 100.0,
+            "threshold": 100,
+            "total_fields": 50,
+            "mismatch_fields": []
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "open_queries",
+          "label": "未闭环数据 Query",
+          "result": "WARN",
+          "severity": "MEDIUM",
+          "blocking": false,
+          "detail": {
+            "open_query_count": 2,
+            "allowed": 0
+          },
+          "suggestion": "存在 2 条未闭环数据 Query。建议：尽快处理并闭环。"
+        }
+      ],
+      "passed_count": 2,
+      "total_count": 3
+    },
+    "ethics_compliance": {
+      "dimension": "ethics_compliance",
+      "label": "伦理合规",
+      "checks": [
+        {
+          "check_item": "ethics_approval_status",
+          "label": "伦理批件状态",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "total_centers": 10,
+            "valid_count": 10,
+            "expired_centers": 0,
+            "expired_list": []
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "icf_version_validity",
+          "label": "ICF 版本有效性",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "consistent": true,
+            "details": []
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "sae_reporting",
+          "label": "严重不良事件（SAE）报告",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "unreported_sae_count": 0,
+            "allowed": 0,
+            "details": []
+          },
+          "suggestion": null
+        }
+      ],
+      "passed_count": 3,
+      "total_count": 3
+    },
+    "trial_progress": {
+      "dimension": "trial_progress",
+      "label": "试验进度",
+      "checks": [
+        {
+          "check_item": "milestone_consistency",
+          "label": "里程碑节点一致性",
+          "result": "PASS",
+          "severity": "MEDIUM",
+          "blocking": false,
+          "detail": {
+            "max_deviation_days": 2,
+            "threshold_days": 3,
+            "details": []
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "budget_enrollment_ratio",
+          "label": "入组进度 vs 预算耗用",
+          "result": "PASS",
+          "severity": "MEDIUM",
+          "blocking": false,
+          "detail": {
+            "enrollment_rate": 45.0,
+            "budget_usage_rate": 52.0,
+            "deviation_percent": 7.0,
+            "threshold_percent": 15
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "center_stall_status",
+          "label": "中心启动进度",
+          "result": "PASS",
+          "severity": "MEDIUM",
+          "blocking": false,
+          "detail": {
+            "stalled_centers": 0,
+            "stall_threshold_days": 30,
+            "details": []
+          },
+          "suggestion": null
+        }
+      ],
+      "passed_count": 3,
+      "total_count": 3
+    },
+    "electronic_documents": {
+      "dimension": "electronic_documents",
+      "label": "电子文档",
+      "checks": [
+        {
+          "check_item": "tmf_document_integrity",
+          "label": "TMF 核心文档完整性",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "completeness_rate": 100.0,
+            "total_core_docs": 80,
+            "archived_docs": 80,
+            "missing_docs": []
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "esignature_validity",
+          "label": "电子签名有效性",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "all_esignatures_valid": true,
+            "invalid_documents": []
+          },
+          "suggestion": null
+        },
+        {
+          "check_item": "audit_trail_integrity",
+          "label": "审计追踪完整性",
+          "result": "PASS",
+          "severity": "HIGH",
+          "blocking": true,
+          "detail": {
+            "audit_trail_complete": true,
+            "issues": []
+          },
+          "suggestion": null
+        }
+      ],
+      "passed_count": 3,
+      "total_count": 3
+    }
+  },
+  "summary": {
+    "total": 12,
+    "passed": 11,
+    "failed": 0,
+    "warnings": 1,
+    "blocked": false,
+    "blocking_items": []
+  }
+}
