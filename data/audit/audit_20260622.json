@@ -1,10 +1,10 @@
 [
   {
-    "trace_id": "c5d07ea0a1944d91b862d274217e4100",
+    "trace_id": "3840833fa97a4d3699e7115ec3e657cf",
     "operation_type": "RELEASE_CREATED",
     "operator": "dev_li",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
       "version": "2.3.0",
@@ -12,16 +12,16 @@
       "title": "CTMS V2.3.0 功能迭代发布"
     },
     "remark": "创建发布申请: CTMS V2.3.0 功能迭代发布",
-    "created_at": "2026-06-22T13:06:44.453760",
+    "created_at": "2026-06-22T13:29:09.705912",
     "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-    "hash": "97b44d812bb22287ae186798a2a780e3baed01e0c1ab7f2e2badfd433fd58970"
+    "hash": "5b8d6c174e3f24b40016ab80e931f9ef728d9be56a0284507724ee9202c9db55"
   },
   {
-    "trace_id": "5f13309f3680483080f8cc753faafdcc",
+    "trace_id": "ef63c2ca3ed2433dab24d4bbf7253890",
     "operation_type": "VALIDATION_COMPLETED",
     "operator": "system",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
       "passed": 11,
@@ -29,16 +29,16 @@
       "blocked": false
     },
     "remark": "前置校验完成：通过",
-    "created_at": "2026-06-22T13:06:44.455401",
-    "prev_hash": "97b44d812bb22287ae186798a2a780e3baed01e0c1ab7f2e2badfd433fd58970",
-    "hash": "a5b90998c91a7dfc16a411c1c74924d949490e2e706348c5323a20548b5d484f"
+    "created_at": "2026-06-22T13:29:09.707758",
+    "prev_hash": "5b8d6c174e3f24b40016ab80e931f9ef728d9be56a0284507724ee9202c9db55",
+    "hash": "5def789570bef30f83b63d4826bba2951f27326b2e7c7212c7e850f69fcb3d3b"
   },
   {
-    "trace_id": "29725ba30d8e4eb8b06ccf75c3bca43a",
+    "trace_id": "657028d3b0dd418385b4e7af16430a1d",
     "operation_type": "APPROVAL_FLOW_CREATED",
     "operator": "dev_li",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
       "release_type": "NORMAL",
@@ -46,16 +46,16 @@
       "mode": "serial"
     },
     "remark": "创建NORMAL审批流，共4个审批节点",
-    "created_at": "2026-06-22T13:06:44.456363",
-    "prev_hash": "a5b90998c91a7dfc16a411c1c74924d949490e2e706348c5323a20548b5d484f",
-    "hash": "b7dc8821ac8b2fab23b74ffc3ec462c9ec5eb39df3f2d6ab999677bf2b716881"
+    "created_at": "2026-06-22T13:29:09.709246",
+    "prev_hash": "5def789570bef30f83b63d4826bba2951f27326b2e7c7212c7e850f69fcb3d3b",
+    "hash": "5a8af92ce6b744c9907a41d327669859ce840878da67f4ad6566b61109458c48"
   },
   {
-    "trace_id": "e0d12112eccb4101904b656b5eda474a",
+    "trace_id": "124c699ae1bd41ffbf9f5748aa67d0cd",
     "operation_type": "APPROVAL_NODE_APPROVED",
     "operator": "dr_zhang",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": {
       "node": "clinical",
       "status": "PENDING"
@@ -65,16 +65,16 @@
       "status": "APPROVED"
     },
     "remark": "审批通过: 临床审批",
-    "created_at": "2026-06-22T13:06:44.457758",
-    "prev_hash": "b7dc8821ac8b2fab23b74ffc3ec462c9ec5eb39df3f2d6ab999677bf2b716881",
-    "hash": "f0ee26ef843ac71201d7cd4137c2ddfad2060736c95be2806a391dd2dff6ff21"
+    "created_at": "2026-06-22T13:29:09.711475",
+    "prev_hash": "5a8af92ce6b744c9907a41d327669859ce840878da67f4ad6566b61109458c48",
+    "hash": "79437a1060a0830fd54dab4baae71d0a77b1ceb4ef100c1e415792b5434d102c"
   },
   {
-    "trace_id": "aa1d785331ca4581a16253a2cf71f967",
+    "trace_id": "a13ae49740a440fb84093d7fb5dd9060",
     "operation_type": "APPROVAL_NODE_APPROVED",
     "operator": "dm_li",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": {
       "node": "data",
       "status": "PENDING"
@@ -84,16 +84,16 @@
       "status": "APPROVED"
     },
     "remark": "审批通过: 数据审批",
-    "created_at": "2026-06-22T13:06:44.459050",
-    "prev_hash": "f0ee26ef843ac71201d7cd4137c2ddfad2060736c95be2806a391dd2dff6ff21",
-    "hash": "55eb8837cf2b0cba36c8fa601feb72ca292010ccaf8c335dcf0c896d450eb546"
+    "created_at": "2026-06-22T13:29:09.714029",
+    "prev_hash": "79437a1060a0830fd54dab4baae71d0a77b1ceb4ef100c1e415792b5434d102c",
+    "hash": "48d508ba046dca9434aefff896d2f815caa038c83b92416747755195bc92c2a0"
   },
   {
-    "trace_id": "06032f0845044ff9b708face45bfb9ed",
+    "trace_id": "01092649ea8f44ecb27f04676632e44a",
     "operation_type": "APPROVAL_NODE_APPROVED",
     "operator": "qa_wang",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": {
       "node": "qa",
       "status": "PENDING"
@@ -103,16 +103,16 @@
       "status": "APPROVED"
     },
     "remark": "审批通过: 质控审批",
-    "created_at": "2026-06-22T13:06:44.460361",
-    "prev_hash": "55eb8837cf2b0cba36c8fa601feb72ca292010ccaf8c335dcf0c896d450eb546",
-    "hash": "499c929e199acef5f2f884df4b41372b60d033bacebefecd0e216919c62a31c0"
+    "created_at": "2026-06-22T13:29:09.716440",
+    "prev_hash": "48d508ba046dca9434aefff896d2f815caa038c83b92416747755195bc92c2a0",
+    "hash": "69a9ad5e8bb24f3742fa38b210cd32b597a30dc2aa6874f2b8fe7acfc630c312"
   },
   {
-    "trace_id": "aab6d047d1b745499fbede6776564716",
+    "trace_id": "b282c1057d0049f8ac3f0c1640d8e8c8",
     "operation_type": "APPROVAL_NODE_APPROVED",
     "operator": "pm_chen",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": {
       "node": "pm",
       "status": "PENDING"
@@ -122,16 +122,16 @@
       "status": "APPROVED"
     },
     "remark": "审批通过: PM审批",
-    "created_at": "2026-06-22T13:06:44.461690",
-    "prev_hash": "499c929e199acef5f2f884df4b41372b60d033bacebefecd0e216919c62a31c0",
-    "hash": "58b5c9adf2d9aa20b2fa81fb86cd6eee72313e9a63e215aa5f13443fffd63e5f"
+    "created_at": "2026-06-22T13:29:09.718646",
+    "prev_hash": "69a9ad5e8bb24f3742fa38b210cd32b597a30dc2aa6874f2b8fe7acfc630c312",
+    "hash": "1bfcf6e8fbb41cc7ce1994a9b7ae8339745b571e80922ecc12e1b0b2d9f73492"
   },
   {
-    "trace_id": "0cb8571c27a8438d8ebc83ced51bbd98",
+    "trace_id": "ad687024a8bf402b8381615a66e3c6a7",
     "operation_type": "GRAY_PLAN_CREATED",
     "operator": "system",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
       "batch_count": 3,
@@ -152,16 +152,16 @@
       ]
     },
     "remark": "灰度发布计划创建完成，共3批次，25个中心",
-    "created_at": "2026-06-22T13:06:44.463581",
-    "prev_hash": "58b5c9adf2d9aa20b2fa81fb86cd6eee72313e9a63e215aa5f13443fffd63e5f",
-    "hash": "e1e15adb4d411ecb10666faff32eeab74b307fd504ec828787e95f4a7d5d29b7"
+    "created_at": "2026-06-22T13:29:09.720975",
+    "prev_hash": "1bfcf6e8fbb41cc7ce1994a9b7ae8339745b571e80922ecc12e1b0b2d9f73492",
+    "hash": "1a903e408955eaa866cf08e01b83979977ee59ad18a10e6455efdefd16b8b40a"
   },
   {
-    "trace_id": "de0553d278b94c1a9767298b47817df0",
+    "trace_id": "4a3a6f053d4e4b1687ea259951d3ea13",
     "operation_type": "GRAY_BATCH_STARTED",
     "operator": "system",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
       "batch_no": 1,
@@ -169,32 +169,32 @@
       "center_count": 9
     },
     "remark": "第1批次灰度发布开始，9个中心",
-    "created_at": "2026-06-22T13:06:44.465918",
-    "prev_hash": "e1e15adb4d411ecb10666faff32eeab74b307fd504ec828787e95f4a7d5d29b7",
-    "hash": "51ce01054d684a5406f0baca0d24e75caca87ae27e1f61d8b12ef5ad257a5dcc"
+    "created_at": "2026-06-22T13:29:09.723807",
+    "prev_hash": "1a903e408955eaa866cf08e01b83979977ee59ad18a10e6455efdefd16b8b40a",
+    "hash": "ed230dcbeefbc24d6e4090d273fcd224c7bd384930a5c986fffe321e047381fc"
   },
   {
-    "trace_id": "7b1a10c87c3044adb4eea1a8623ef21e",
+    "trace_id": "f009662150e144bc8e975540e8727d51",
     "operation_type": "GRAY_BATCH_RELEASE_COMPLETED",
     "operator": "system",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
       "batch_no": 1,
       "status": "OBSERVING"
     },
     "remark": "第1批次发布完成，进入观察期",
-    "created_at": "2026-06-22T13:06:44.468372",
-    "prev_hash": "51ce01054d684a5406f0baca0d24e75caca87ae27e1f61d8b12ef5ad257a5dcc",
-    "hash": "1cf8fc26357095ca466a430eb1a411bb5ad4a4263167a8f8591472737b42adcf"
+    "created_at": "2026-06-22T13:29:09.726257",
+    "prev_hash": "ed230dcbeefbc24d6e4090d273fcd224c7bd384930a5c986fffe321e047381fc",
+    "hash": "6308c15422580749d7b71c3ec795ab78a6b7922d52ef0298af142ff60901c2e8"
   },
   {
-    "trace_id": "d9c3c499ed704489ae7fabc5ed2c58bd",
+    "trace_id": "14fdf272982a4570964d6a1a867e1d5e",
     "operation_type": "FUSE_TRIGGERED",
     "operator": "system",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
       "fuse_level": 1,
@@ -210,23 +210,23 @@
       ]
     },
     "remark": "熔断触发: 一级熔断（预警）",
-    "created_at": "2026-06-22T13:06:44.479634",
-    "prev_hash": "1cf8fc26357095ca466a430eb1a411bb5ad4a4263167a8f8591472737b42adcf",
-    "hash": "06a64592c8e30a3e08e86b3e6d69fc4bd76d963cc79a575bbd0d6c141038ad1c"
+    "created_at": "2026-06-22T13:29:09.740072",
+    "prev_hash": "6308c15422580749d7b71c3ec795ab78a6b7922d52ef0298af142ff60901c2e8",
+    "hash": "846957cfbcf8af29f16c656cd55d114b53bb103828384b9aa9ec27b964c745b8"
   },
   {
-    "trace_id": "1bc05db869c34ad3977b240dbb8bcedf",
+    "trace_id": "9415d52466a945ba88a238f6b8537165",
     "operation_type": "RELEASE_REPORT_GENERATED",
     "operator": "system",
     "target_type": "release",
-    "target_id": "REL-20260622-DA7522",
+    "target_id": "REL-20260622-E912EB",
     "before_value": null,
     "after_value": {
-      "report_file": "./data/reports\\release_REL-20260622-DA7522_report.json"
+      "report_file": "./data/reports\\release_REL-20260622-E912EB_report.json"
     },
     "remark": "发布复盘报告生成完成",
-    "created_at": "2026-06-22T13:06:44.488685",
-    "prev_hash": "06a64592c8e30a3e08e86b3e6d69fc4bd76d963cc79a575bbd0d6c141038ad1c",
-    "hash": "8564e7341e54470807ab00405d55d9f0f9d14a707a554127166afc88f8e7937e"
+    "created_at": "2026-06-22T13:29:09.750962",
+    "prev_hash": "846957cfbcf8af29f16c656cd55d114b53bb103828384b9aa9ec27b964c745b8",
+    "hash": "23de4706e6c8c775041e36efc8118813dace3e953fb24ba05bfe554fad34e270"
   }
 ]

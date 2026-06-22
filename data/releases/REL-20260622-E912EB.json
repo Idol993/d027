@@ -1,5 +1,5 @@
 {
-  "release_id": "REL-20260622-DA7522",
+  "release_id": "REL-20260622-E912EB",
   "version": "2.3.0",
   "project_id": "CT-2024-001",
   "title": "CTMS V2.3.0 功能迭代发布",
@@ -9,14 +9,14 @@
   "status": "GRAYING",
   "is_hotfix": false,
   "hotfix_reason": null,
-  "created_at": "2026-06-22T13:06:44.453477",
-  "updated_at": "2026-06-22T13:06:44.485644",
+  "created_at": "2026-06-22T13:29:09.705680",
+  "updated_at": "2026-06-22T13:29:09.746029",
   "current_stage": "gray_release",
   "validation_result": {
-    "release_id": "REL-20260622-DA7522",
+    "release_id": "REL-20260622-E912EB",
     "project_id": "CT-2024-001",
     "version": "2.3.0",
-    "checked_at": "2026-06-22T13:06:44.454937",
+    "checked_at": "2026-06-22T13:29:09.707077",
     "dimensions": {
       "subject_data": {
         "dimension": "subject_data",
@@ -219,12 +219,12 @@
     }
   },
   "approval_flow": {
-    "release_id": "REL-20260622-DA7522",
+    "release_id": "REL-20260622-E912EB",
     "version": "2.3.0",
     "project_id": "CT-2024-001",
     "release_type": "NORMAL",
     "applicant": "dev_li",
-    "created_at": "2026-06-22T13:06:44.456121",
+    "created_at": "2026-06-22T13:29:09.708864",
     "status": "APPROVED",
     "nodes": [
       {
@@ -236,10 +236,10 @@
         "status": "APPROVED",
         "timeout_hours": 24,
         "comment": "经评估，本次发布不涉及受试者安全风险，方案执行无影响。",
-        "approved_at": "2026-06-22T13:06:44.457539",
+        "approved_at": "2026-06-22T13:29:09.711133",
         "delegated_to": null,
         "is_post_approval": false,
-        "activated_at": "2026-06-22T13:06:44.456135"
+        "activated_at": "2026-06-22T13:29:09.708886"
       },
       {
         "order": 2,
@@ -250,10 +250,10 @@
         "status": "APPROVED",
         "timeout_hours": 24,
         "comment": "数据迁移方案已评审，EDC同步接口兼容性验证通过。",
-        "approved_at": "2026-06-22T13:06:44.458848",
+        "approved_at": "2026-06-22T13:29:09.713656",
         "delegated_to": null,
         "is_post_approval": false,
-        "activated_at": "2026-06-22T13:06:44.457546"
+        "activated_at": "2026-06-22T13:29:09.711145"
       },
       {
         "order": 3,
@@ -264,10 +264,10 @@
         "status": "APPROVED",
         "timeout_hours": 24,
         "comment": "GCP合规性评估通过，TMF文档已同步更新。",
-        "approved_at": "2026-06-22T13:06:44.460160",
+        "approved_at": "2026-06-22T13:29:09.716081",
         "delegated_to": null,
         "is_post_approval": false,
-        "activated_at": "2026-06-22T13:06:44.458854"
+        "activated_at": "2026-06-22T13:29:09.713667"
       },
       {
         "order": 4,
@@ -278,19 +278,19 @@
         "status": "APPROVED",
         "timeout_hours": 24,
         "comment": "发布窗口确认，资源协调到位，同意发布。",
-        "approved_at": "2026-06-22T13:06:44.461482",
+        "approved_at": "2026-06-22T13:29:09.718393",
         "delegated_to": null,
         "is_post_approval": false,
-        "activated_at": "2026-06-22T13:06:44.460165"
+        "activated_at": "2026-06-22T13:29:09.716091"
       }
     ],
     "hotfix_reason": null,
     "deviation_recorded": false,
     "mode": "serial",
-    "approved_at": "2026-06-22T13:06:44.461489"
+    "approved_at": "2026-06-22T13:29:09.718403"
   },
   "gray_plan": {
-    "release_id": "REL-20260622-DA7522",
+    "release_id": "REL-20260622-E912EB",
     "total_centers": 25,
     "batch_count": 3,
     "batches": [
@@ -368,186 +368,186 @@
         ],
         "status": "OBSERVING",
         "observation_hours": 4,
-        "release_time": "2026-06-22T13:06:44.465450",
+        "release_time": "2026-06-22T13:29:09.723179",
         "rollback_time": null,
         "monitor_metrics": [
           {
             "metric_name": "data_anomaly_rate",
             "metric_label": "数据异常率",
-            "metric_value": 1.17,
+            "metric_value": 0.55,
             "unit": "%",
             "warn_threshold": 2.0,
             "fuse_threshold": 5.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.470521",
+            "collected_at": "2026-06-22T13:29:09.728545",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "entry_delay_rate",
             "metric_label": "录入延迟率",
-            "metric_value": 5.73,
+            "metric_value": 7.35,
             "unit": "%",
             "warn_threshold": 10.0,
             "fuse_threshold": 20.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.470521",
+            "collected_at": "2026-06-22T13:29:09.728545",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "approval_block_rate",
             "metric_label": "审批阻塞率",
-            "metric_value": 8.91,
+            "metric_value": 5.51,
             "unit": "%",
             "warn_threshold": 15.0,
             "fuse_threshold": 30.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.470521",
+            "collected_at": "2026-06-22T13:29:09.728545",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "system_error_rate",
             "metric_label": "系统错误率",
-            "metric_value": 0.37,
+            "metric_value": 0.45,
             "unit": "%",
             "warn_threshold": 1.0,
             "fuse_threshold": 3.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.470521",
+            "collected_at": "2026-06-22T13:29:09.728545",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "login_success_rate",
             "metric_label": "登录成功率",
-            "metric_value": 98.87,
+            "metric_value": 99.8,
             "unit": "%",
             "warn_threshold": 98.0,
             "fuse_threshold": 95.0,
             "is_reverse": true,
-            "collected_at": "2026-06-22T13:06:44.470521",
+            "collected_at": "2026-06-22T13:29:09.728545",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "data_anomaly_rate",
             "metric_label": "数据异常率",
-            "metric_value": 0.88,
+            "metric_value": 1.18,
             "unit": "%",
             "warn_threshold": 2.0,
             "fuse_threshold": 5.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.472713",
+            "collected_at": "2026-06-22T13:29:09.732239",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "entry_delay_rate",
             "metric_label": "录入延迟率",
-            "metric_value": 4.47,
+            "metric_value": 3.53,
             "unit": "%",
             "warn_threshold": 10.0,
             "fuse_threshold": 20.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.472713",
+            "collected_at": "2026-06-22T13:29:09.732239",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "approval_block_rate",
             "metric_label": "审批阻塞率",
-            "metric_value": 4.55,
+            "metric_value": 6.92,
             "unit": "%",
             "warn_threshold": 15.0,
             "fuse_threshold": 30.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.472713",
+            "collected_at": "2026-06-22T13:29:09.732239",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "system_error_rate",
             "metric_label": "系统错误率",
-            "metric_value": 0.26,
+            "metric_value": 0.33,
             "unit": "%",
             "warn_threshold": 1.0,
             "fuse_threshold": 3.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.472713",
+            "collected_at": "2026-06-22T13:29:09.732239",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "login_success_rate",
             "metric_label": "登录成功率",
-            "metric_value": 99.23,
+            "metric_value": 99.67,
             "unit": "%",
             "warn_threshold": 98.0,
             "fuse_threshold": 95.0,
             "is_reverse": true,
-            "collected_at": "2026-06-22T13:06:44.472713",
+            "collected_at": "2026-06-22T13:29:09.732239",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "data_anomaly_rate",
             "metric_label": "数据异常率",
-            "metric_value": 0.69,
+            "metric_value": 1.15,
             "unit": "%",
             "warn_threshold": 2.0,
             "fuse_threshold": 5.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.475094",
+            "collected_at": "2026-06-22T13:29:09.735136",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "entry_delay_rate",
             "metric_label": "录入延迟率",
-            "metric_value": 2.86,
+            "metric_value": 4.64,
             "unit": "%",
             "warn_threshold": 10.0,
             "fuse_threshold": 20.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.475094",
+            "collected_at": "2026-06-22T13:29:09.735136",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "approval_block_rate",
             "metric_label": "审批阻塞率",
-            "metric_value": 10.66,
+            "metric_value": 11.12,
             "unit": "%",
             "warn_threshold": 15.0,
             "fuse_threshold": 30.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.475094",
+            "collected_at": "2026-06-22T13:29:09.735136",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "system_error_rate",
             "metric_label": "系统错误率",
-            "metric_value": 0.25,
+            "metric_value": 0.28,
             "unit": "%",
             "warn_threshold": 1.0,
             "fuse_threshold": 3.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.475094",
+            "collected_at": "2026-06-22T13:29:09.735136",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "login_success_rate",
             "metric_label": "登录成功率",
-            "metric_value": 99.96,
+            "metric_value": 99.54,
             "unit": "%",
             "warn_threshold": 98.0,
             "fuse_threshold": 95.0,
             "is_reverse": true,
-            "collected_at": "2026-06-22T13:06:44.475094",
+            "collected_at": "2026-06-22T13:29:09.735136",
             "batch_no": 1,
             "status": "NORMAL"
           },
@@ -559,7 +559,7 @@
             "warn_threshold": 2.0,
             "fuse_threshold": 5.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.477649",
+            "collected_at": "2026-06-22T13:29:09.738031",
             "batch_no": 1,
             "status": "FUSE"
           },
@@ -571,7 +571,7 @@
             "warn_threshold": 10.0,
             "fuse_threshold": 20.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.477649",
+            "collected_at": "2026-06-22T13:29:09.738031",
             "batch_no": 1,
             "status": "WARN"
           },
@@ -583,7 +583,7 @@
             "warn_threshold": 15.0,
             "fuse_threshold": 30.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.477649",
+            "collected_at": "2026-06-22T13:29:09.738031",
             "batch_no": 1,
             "status": "NORMAL"
           },
@@ -595,7 +595,7 @@
             "warn_threshold": 1.0,
             "fuse_threshold": 3.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.477649",
+            "collected_at": "2026-06-22T13:29:09.738031",
             "batch_no": 1,
             "status": "NORMAL"
           },
@@ -607,43 +607,43 @@
             "warn_threshold": 98.0,
             "fuse_threshold": 95.0,
             "is_reverse": true,
-            "collected_at": "2026-06-22T13:06:44.477649",
+            "collected_at": "2026-06-22T13:29:09.738031",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "data_anomaly_rate",
             "metric_label": "数据异常率",
-            "metric_value": 0.93,
+            "metric_value": 0.81,
             "unit": "%",
             "warn_threshold": 2.0,
             "fuse_threshold": 5.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.483156",
+            "collected_at": "2026-06-22T13:29:09.743368",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "entry_delay_rate",
             "metric_label": "录入延迟率",
-            "metric_value": 3.32,
+            "metric_value": 4.47,
             "unit": "%",
             "warn_threshold": 10.0,
             "fuse_threshold": 20.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.483156",
+            "collected_at": "2026-06-22T13:29:09.743368",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "approval_block_rate",
             "metric_label": "审批阻塞率",
-            "metric_value": 9.13,
+            "metric_value": 7.03,
             "unit": "%",
             "warn_threshold": 15.0,
             "fuse_threshold": 30.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.483156",
+            "collected_at": "2026-06-22T13:29:09.743368",
             "batch_no": 1,
             "status": "NORMAL"
           },
@@ -655,19 +655,19 @@
             "warn_threshold": 1.0,
             "fuse_threshold": 3.0,
             "is_reverse": false,
-            "collected_at": "2026-06-22T13:06:44.483156",
+            "collected_at": "2026-06-22T13:29:09.743368",
             "batch_no": 1,
             "status": "NORMAL"
           },
           {
             "metric_name": "login_success_rate",
             "metric_label": "登录成功率",
-            "metric_value": 98.66,
+            "metric_value": 98.88,
             "unit": "%",
             "warn_threshold": 98.0,
             "fuse_threshold": 95.0,
             "is_reverse": true,
-            "collected_at": "2026-06-22T13:06:44.483156",
+            "collected_at": "2026-06-22T13:29:09.743368",
             "batch_no": 1,
             "status": "NORMAL"
           }
@@ -676,7 +676,7 @@
           {
             "fuse_level": 1,
             "fuse_level_name": "一级熔断（预警）",
-            "trigger_time": "2026-06-22T13:06:44.478810",
+            "trigger_time": "2026-06-22T13:29:09.739221",
             "reasons": [
               {
                 "metric": "录入延迟率",
@@ -690,36 +690,36 @@
                 {
                   "metric_name": "data_anomaly_rate",
                   "metric_label": "数据异常率",
-                  "metric_value": 1.17,
+                  "metric_value": 0.55,
                   "unit": "%",
                   "warn_threshold": 2.0,
                   "fuse_threshold": 5.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.470521",
+                  "collected_at": "2026-06-22T13:29:09.728545",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "data_anomaly_rate",
                   "metric_label": "数据异常率",
-                  "metric_value": 0.88,
+                  "metric_value": 1.18,
                   "unit": "%",
                   "warn_threshold": 2.0,
                   "fuse_threshold": 5.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.472713",
+                  "collected_at": "2026-06-22T13:29:09.732239",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "data_anomaly_rate",
                   "metric_label": "数据异常率",
-                  "metric_value": 0.69,
+                  "metric_value": 1.15,
                   "unit": "%",
                   "warn_threshold": 2.0,
                   "fuse_threshold": 5.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.475094",
+                  "collected_at": "2026-06-22T13:29:09.735136",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
@@ -731,7 +731,7 @@
                   "warn_threshold": 2.0,
                   "fuse_threshold": 5.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.477649",
+                  "collected_at": "2026-06-22T13:29:09.738031",
                   "batch_no": 1,
                   "status": "FUSE"
                 }
@@ -740,36 +740,36 @@
                 {
                   "metric_name": "entry_delay_rate",
                   "metric_label": "录入延迟率",
-                  "metric_value": 5.73,
+                  "metric_value": 7.35,
                   "unit": "%",
                   "warn_threshold": 10.0,
                   "fuse_threshold": 20.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.470521",
+                  "collected_at": "2026-06-22T13:29:09.728545",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "entry_delay_rate",
                   "metric_label": "录入延迟率",
-                  "metric_value": 4.47,
+                  "metric_value": 3.53,
                   "unit": "%",
                   "warn_threshold": 10.0,
                   "fuse_threshold": 20.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.472713",
+                  "collected_at": "2026-06-22T13:29:09.732239",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "entry_delay_rate",
                   "metric_label": "录入延迟率",
-                  "metric_value": 2.86,
+                  "metric_value": 4.64,
                   "unit": "%",
                   "warn_threshold": 10.0,
                   "fuse_threshold": 20.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.475094",
+                  "collected_at": "2026-06-22T13:29:09.735136",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
@@ -781,7 +781,7 @@
                   "warn_threshold": 10.0,
                   "fuse_threshold": 20.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.477649",
+                  "collected_at": "2026-06-22T13:29:09.738031",
                   "batch_no": 1,
                   "status": "WARN"
                 }
@@ -790,36 +790,36 @@
                 {
                   "metric_name": "approval_block_rate",
                   "metric_label": "审批阻塞率",
-                  "metric_value": 8.91,
+                  "metric_value": 5.51,
                   "unit": "%",
                   "warn_threshold": 15.0,
                   "fuse_threshold": 30.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.470521",
+                  "collected_at": "2026-06-22T13:29:09.728545",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "approval_block_rate",
                   "metric_label": "审批阻塞率",
-                  "metric_value": 4.55,
+                  "metric_value": 6.92,
                   "unit": "%",
                   "warn_threshold": 15.0,
                   "fuse_threshold": 30.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.472713",
+                  "collected_at": "2026-06-22T13:29:09.732239",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "approval_block_rate",
                   "metric_label": "审批阻塞率",
-                  "metric_value": 10.66,
+                  "metric_value": 11.12,
                   "unit": "%",
                   "warn_threshold": 15.0,
                   "fuse_threshold": 30.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.475094",
+                  "collected_at": "2026-06-22T13:29:09.735136",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
@@ -831,7 +831,7 @@
                   "warn_threshold": 15.0,
                   "fuse_threshold": 30.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.477649",
+                  "collected_at": "2026-06-22T13:29:09.738031",
                   "batch_no": 1,
                   "status": "NORMAL"
                 }
@@ -840,36 +840,36 @@
                 {
                   "metric_name": "system_error_rate",
                   "metric_label": "系统错误率",
-                  "metric_value": 0.37,
+                  "metric_value": 0.45,
                   "unit": "%",
                   "warn_threshold": 1.0,
                   "fuse_threshold": 3.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.470521",
+                  "collected_at": "2026-06-22T13:29:09.728545",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "system_error_rate",
                   "metric_label": "系统错误率",
-                  "metric_value": 0.26,
+                  "metric_value": 0.33,
                   "unit": "%",
                   "warn_threshold": 1.0,
                   "fuse_threshold": 3.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.472713",
+                  "collected_at": "2026-06-22T13:29:09.732239",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "system_error_rate",
                   "metric_label": "系统错误率",
-                  "metric_value": 0.25,
+                  "metric_value": 0.28,
                   "unit": "%",
                   "warn_threshold": 1.0,
                   "fuse_threshold": 3.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.475094",
+                  "collected_at": "2026-06-22T13:29:09.735136",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
@@ -881,7 +881,7 @@
                   "warn_threshold": 1.0,
                   "fuse_threshold": 3.0,
                   "is_reverse": false,
-                  "collected_at": "2026-06-22T13:06:44.477649",
+                  "collected_at": "2026-06-22T13:29:09.738031",
                   "batch_no": 1,
                   "status": "NORMAL"
                 }
@@ -890,36 +890,36 @@
                 {
                   "metric_name": "login_success_rate",
                   "metric_label": "登录成功率",
-                  "metric_value": 98.87,
+                  "metric_value": 99.8,
                   "unit": "%",
                   "warn_threshold": 98.0,
                   "fuse_threshold": 95.0,
                   "is_reverse": true,
-                  "collected_at": "2026-06-22T13:06:44.470521",
+                  "collected_at": "2026-06-22T13:29:09.728545",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "login_success_rate",
                   "metric_label": "登录成功率",
-                  "metric_value": 99.23,
+                  "metric_value": 99.67,
                   "unit": "%",
                   "warn_threshold": 98.0,
                   "fuse_threshold": 95.0,
                   "is_reverse": true,
-                  "collected_at": "2026-06-22T13:06:44.472713",
+                  "collected_at": "2026-06-22T13:29:09.732239",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
                 {
                   "metric_name": "login_success_rate",
                   "metric_label": "登录成功率",
-                  "metric_value": 99.96,
+                  "metric_value": 99.54,
                   "unit": "%",
                   "warn_threshold": 98.0,
                   "fuse_threshold": 95.0,
                   "is_reverse": true,
-                  "collected_at": "2026-06-22T13:06:44.475094",
+                  "collected_at": "2026-06-22T13:29:09.735136",
                   "batch_no": 1,
                   "status": "NORMAL"
                 },
@@ -931,7 +931,7 @@
                   "warn_threshold": 98.0,
                   "fuse_threshold": 95.0,
                   "is_reverse": true,
-                  "collected_at": "2026-06-22T13:06:44.477649",
+                  "collected_at": "2026-06-22T13:29:09.738031",
                   "batch_no": 1,
                   "status": "NORMAL"
                 }
@@ -939,7 +939,7 @@
             }
           }
         ],
-        "observation_start_time": "2026-06-22T13:06:44.468027"
+        "observation_start_time": "2026-06-22T13:29:09.725902"
       },
       {
         "batch_no": 2,
@@ -1086,7 +1086,7 @@
         "fuse_events": []
       }
     ],
-    "created_at": "2026-06-22T13:06:44.462963",
+    "created_at": "2026-06-22T13:29:09.720283",
     "current_batch": 0,
     "status": "OBSERVING"
   },

@@ -8,7 +8,7 @@ import sys
 import time
 import argparse
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -337,6 +337,8 @@ class ReleaseOrchestrator:
         if approval_flow:
             release["approval_flow"] = approval_flow
 
+        release = self._enrich_release_info(release)
+
         return release
 
     def _enrich_release_info(self, release: Dict[str, Any]) -> Dict[str, Any]:
@@ -351,13 +353,7 @@ class ReleaseOrchestrator:
             total_cycles = 0
             total_fuse = 0
             for batch in gray_plan.get("batches", []):
-                metrics = batch.get("monitor_metrics", [])
-                names = set()
-                times = set()
-                for m in metrics:
-                    names.add(m["metric_name"])
-                    times.add(m["collected_at"])
-                cycles = len(times) if times else (len(metrics) // len(names) if names else 0)
+                cycles, _, _ = self._calc_monitor_stats(batch)
                 total_cycles += cycles
                 total_fuse += len(batch.get("fuse_events", []))
 
@@ -388,6 +384,31 @@ class ReleaseOrchestrator:
             release["_stats"]["approval_progress"] = "N/A"
 
         return release
+
+    def _calc_monitor_stats(self, batch: Dict[str, Any]) -> Tuple[int, int, int]:
+        metrics = batch.get("monitor_metrics", [])
+        if not metrics:
+            return 0, 0, 0
+
+        metric_names = set()
+        collection_times = set()
+        for m in metrics:
+            metric_names.add(m["metric_name"])
+            collection_times.add(m["collected_at"])
+
+        n_metrics = len(metric_names)
+        n_times = len(collection_times)
+        n_records = len(metrics)
+
+        if n_metrics == 0:
+            return 0, 0, 0
+
+        if n_times <= 3 or n_times <= n_metrics:
+            cycles = n_times
+        else:
+            cycles = n_records // n_metrics
+
+        return cycles, n_metrics, n_records
 
     def list_releases(self, status: str = None, project_id: str = None,
                       enrich: bool = True) -> List[Dict[str, Any]]:
@@ -488,17 +509,8 @@ class ReleaseOrchestrator:
             if batch.get("rollback_time"):
                 lines.append(f"    回滚时间: {batch['rollback_time']}")
 
-            metric_count = len(batch.get("monitor_metrics", []))
-            metric_names = set()
-            collection_times = set()
-            for m in batch.get("monitor_metrics", []):
-                metric_names.add(m["metric_name"])
-                collection_times.add(m["collected_at"])
-
-            monitor_cycles = len(collection_times) if collection_times else (
-                metric_count // len(metric_names) if metric_names else 0
-            )
-            lines.append(f"    监控轮数: {monitor_cycles} 轮 ({len(metric_names)} 项指标 / 共 {metric_count} 条记录)")
+            cycles, n_metrics, n_records = self._calc_monitor_stats(batch)
+            lines.append(f"    监控轮数: {cycles} 轮 ({n_metrics} 项指标 / 共 {n_records} 条记录)")
 
             fuse_count = len(batch.get("fuse_events", []))
             if fuse_count > 0:
@@ -624,10 +636,13 @@ class ReleaseOrchestrator:
                 status_icon = {"PENDING": "▶", "APPROVED": "✓", "REJECTED": "✗",
                                "POST_APPROVED": "✓*", "NOT_STARTED": "○"}.get(node["status"], "?")
                 approver = node.get("approver", "N/A")
-                time_str = node.get("completed_at", node.get("created_at", ""))
+                time_str = node.get("approved_at", node.get("activated_at", node.get("created_at", "")))
                 comment = f" - {node['comment']}" if node.get("comment") else ""
                 lines.append(f"  {status_icon} 第{node['order']}步 {node['label']} [{node['status']}]")
-                lines.append(f"      审批人: {approver} | 时间: {time_str}{comment}")
+                if time_str:
+                    lines.append(f"      审批人: {approver} | 时间: {time_str}{comment}")
+                else:
+                    lines.append(f"      审批人: {approver} | 尚未处理")
         else:
             lines.append("  暂无审批链路数据")
         lines.append("")
@@ -643,13 +658,7 @@ class ReleaseOrchestrator:
             for batch in gray_plan["batches"]:
                 status_icon = {"PENDING": "○", "RELEASING": "→", "OBSERVING": "▶",
                                "COMPLETED": "✓", "ROLLED_BACK": "✗"}.get(batch["status"], "?")
-                metrics = batch.get("monitor_metrics", [])
-                names = set()
-                times = set()
-                for m in metrics:
-                    names.add(m["metric_name"])
-                    times.add(m["collected_at"])
-                cycles = len(times) if times else (len(metrics) // len(names) if names else 0)
+                cycles, n_metrics, n_records = self._calc_monitor_stats(batch)
                 fuse_count = len(batch.get("fuse_events", []))
 
                 lines.append(f"  {status_icon} 第{batch['batch_no']}批 ({batch['label']}) - [{batch['status']}]")
@@ -732,11 +741,41 @@ class ReleaseOrchestrator:
                 for i, rec in enumerate(audit_records, 1):
                     op = rec.get("operation_type", "N/A")
                     operator = rec.get("operator", "N/A")
-                    ts = rec.get("timestamp", rec.get("created_at", ""))
-                    detail = rec.get("detail", "")
-                    result = rec.get("result", rec.get("result_status", ""))
-                    short_detail = str(detail)[:50] if detail else ""
-                    lines.append(f"  [{i:02d}] {ts} | {operator:<10} | {op:<20} | {result:<10} {short_detail}")
+                    ts = rec.get("created_at", "")
+                    remark = rec.get("remark", "")
+                    after = rec.get("after_value", {})
+                    before = rec.get("before_value", {})
+
+                    if remark:
+                        detail = remark[:50]
+                    elif after:
+                        if isinstance(after, dict):
+                            parts = []
+                            for k, v in list(after.items())[:3]:
+                                parts.append(f"{k}={v}")
+                            detail = ", ".join(parts)[:50]
+                        else:
+                            detail = str(after)[:50]
+                    elif before:
+                        if isinstance(before, dict):
+                            parts = []
+                            for k, v in list(before.items())[:3]:
+                                parts.append(f"{k}={v}")
+                            detail = ", ".join(parts)[:50]
+                        else:
+                            detail = str(before)[:50]
+                    else:
+                        detail = "无详情"
+
+                    result_status = "✓ 成功"
+                    if "FAIL" in op or "REJECT" in op:
+                        result_status = "✗ 失败"
+                    elif "FUSE" in op or "WARN" in op:
+                        result_status = "⚠ 告警"
+                    elif "ROLLBACK" in op:
+                        result_status = "↺ 回滚"
+
+                    lines.append(f"  [{i:02d}] {ts} | {operator:<10} | {op:<22} | {result_status:<10} {detail}")
             else:
                 lines.append("  暂无审计记录")
         except Exception as e:
@@ -767,11 +806,11 @@ class ReleaseOrchestrator:
         validation = release.get("validation_result")
         if validation:
             events.append({
-                "time": validation.get("validated_at", ""),
+                "time": validation.get("checked_at", validation.get("validated_at", "")),
                 "type": "发布校验",
-                "operator": validation.get("validator", "system"),
-                "result": f"{'✓ 通过' if validation.get('passed') else '✗ 未通过'}",
-                "detail": (f"高危: {validation.get('high_risk_count', 0)}, "
+                "operator": validation.get("validator", validation.get("operator", "system")),
+                "result": f"{'✓ 通过' if validation.get('summary', {}).get('passed', validation.get('passed')) else '✗ 未通过'}",
+                "detail": (f"高危: {validation.get('high_risk_count', validation.get('summary', {}).get('blocked_count', 0))}, "
                           f"中危: {validation.get('medium_risk_count', 0)}, "
                           f"低危: {validation.get('low_risk_count', 0)}")
             })
@@ -779,9 +818,10 @@ class ReleaseOrchestrator:
         approval_flow = release.get("approval_flow")
         if approval_flow and approval_flow.get("nodes"):
             for node in approval_flow["nodes"]:
+                node_time = node.get("approved_at", node.get("activated_at", ""))
                 if node["status"] in ["APPROVED", "POST_APPROVED"]:
                     events.append({
-                        "time": node.get("completed_at", ""),
+                        "time": node_time,
                         "type": f"审批: {node['label']}",
                         "operator": node.get("approver", ""),
                         "result": f"✓ {'补签' if node['status'] == 'POST_APPROVED' else '通过'}",
@@ -789,7 +829,7 @@ class ReleaseOrchestrator:
                     })
                 elif node["status"] == "REJECTED":
                     events.append({
-                        "time": node.get("completed_at", ""),
+                        "time": node_time,
                         "type": f"审批: {node['label']}",
                         "operator": node.get("approver", ""),
                         "result": "✗ 拒绝",
