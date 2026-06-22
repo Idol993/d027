@@ -313,18 +313,84 @@ class ReleaseOrchestrator:
         if not release:
             raise ValueError(f"发布申请不存在: {release_id}")
 
+        gray_plan = self.gray_manager.get_gray_plan(release_id)
+        approval_flow = self.approval_workflow.get_approval_flow(release_id)
+
         report = self.report_generator.generate_release_report(
             release_id,
             release.get("validation_result"),
-            release.get("approval_flow"),
-            release.get("gray_plan")
+            approval_flow if approval_flow else release.get("approval_flow"),
+            gray_plan if gray_plan else release.get("gray_plan")
         )
         return report
 
     def get_release(self, release_id: str) -> Dict[str, Any]:
-        return self._load_release(release_id)
+        release = self._load_release(release_id)
+        if not release:
+            return None
 
-    def list_releases(self, status: str = None, project_id: str = None) -> List[Dict[str, Any]]:
+        gray_plan = self.gray_manager.get_gray_plan(release_id)
+        if gray_plan:
+            release["gray_plan"] = gray_plan
+
+        approval_flow = self.approval_workflow.get_approval_flow(release_id)
+        if approval_flow:
+            release["approval_flow"] = approval_flow
+
+        return release
+
+    def _enrich_release_info(self, release: Dict[str, Any]) -> Dict[str, Any]:
+        if not release:
+            return release
+
+        release_id = release["release_id"]
+        gray_plan = self.gray_manager.get_gray_plan(release_id)
+        if gray_plan:
+            release["gray_plan"] = gray_plan
+
+            total_cycles = 0
+            total_fuse = 0
+            for batch in gray_plan.get("batches", []):
+                metrics = batch.get("monitor_metrics", [])
+                names = set()
+                times = set()
+                for m in metrics:
+                    names.add(m["metric_name"])
+                    times.add(m["collected_at"])
+                cycles = len(times) if times else (len(metrics) // len(names) if names else 0)
+                total_cycles += cycles
+                total_fuse += len(batch.get("fuse_events", []))
+
+            release["_stats"] = {
+                "gray_status": gray_plan.get("status", "N/A"),
+                "current_batch": gray_plan.get("current_batch", -1) + 1,
+                "total_batches": gray_plan.get("batch_count", 0),
+                "total_cycles": total_cycles,
+                "total_fuse": total_fuse
+            }
+        else:
+            release["_stats"] = {
+                "gray_status": "未开始",
+                "current_batch": 0,
+                "total_batches": 0,
+                "total_cycles": 0,
+                "total_fuse": 0
+            }
+
+        approval_flow = self.approval_workflow.get_approval_flow(release_id)
+        if approval_flow:
+            release["approval_flow"] = approval_flow
+            approved = sum(1 for n in approval_flow.get("nodes", [])
+                           if n["status"] in ["APPROVED", "POST_APPROVED"])
+            total = len(approval_flow.get("nodes", []))
+            release["_stats"]["approval_progress"] = f"{approved}/{total}"
+        else:
+            release["_stats"]["approval_progress"] = "N/A"
+
+        return release
+
+    def list_releases(self, status: str = None, project_id: str = None,
+                      enrich: bool = True) -> List[Dict[str, Any]]:
         releases = []
         if not os.path.exists(self.release_dir):
             return releases
@@ -337,6 +403,8 @@ class ReleaseOrchestrator:
                         continue
                     if project_id and release.get("project_id") != project_id:
                         continue
+                    if enrich:
+                        release = self._enrich_release_info(release)
                     releases.append(release)
                 except Exception:
                     continue
@@ -421,13 +489,16 @@ class ReleaseOrchestrator:
                 lines.append(f"    回滚时间: {batch['rollback_time']}")
 
             metric_count = len(batch.get("monitor_metrics", []))
-            metric_by_name = {}
+            metric_names = set()
+            collection_times = set()
             for m in batch.get("monitor_metrics", []):
-                name = m["metric_name"]
-                if name not in metric_by_name or m["collected_at"] > metric_by_name[name]["collected_at"]:
-                    metric_by_name[name] = m
+                metric_names.add(m["metric_name"])
+                collection_times.add(m["collected_at"])
 
-            lines.append(f"    监控轮数: {len(metric_by_name) if metric_by_name else 0} 项指标 / 共 {metric_count} 条记录")
+            monitor_cycles = len(collection_times) if collection_times else (
+                metric_count // len(metric_names) if metric_names else 0
+            )
+            lines.append(f"    监控轮数: {monitor_cycles} 轮 ({len(metric_names)} 项指标 / 共 {metric_count} 条记录)")
 
             fuse_count = len(batch.get("fuse_events", []))
             if fuse_count > 0:
@@ -516,6 +587,324 @@ class ReleaseOrchestrator:
                 lines.append(f"    - {reason.get('metric', 'N/A')}: {reason.get('value', 'N/A')}"
                            f" (阈值: {reason.get('threshold', 'N/A')}, 级别: {reason.get('level', 'N/A')})")
             lines.append("")
+
+        return "\n".join(lines)
+
+    def get_snapshot_text(self, release_id: str) -> str:
+        release = self.get_release(release_id)
+        if not release:
+            return f"错误：发布编号不存在 - {release_id}\n请使用 --list 命令查看所有发布"
+
+        lines = []
+        lines.append("=" * 80)
+        lines.append("  CTMS 发布进度快照")
+        lines.append("=" * 80)
+        lines.append(f"生成时间: {get_now_iso()}")
+        lines.append("")
+
+        stats = release.get("_stats", {})
+        lines.append("【基本信息】")
+        lines.append(f"  发布编号: {release['release_id']}")
+        lines.append(f"  版 本 号: {release['version']}")
+        lines.append(f"  项目编号: {release['project_id']}")
+        lines.append(f"  发布标题: {release['title']}")
+        lines.append(f"  发布类型: {'紧急Hotfix' if release.get('is_hotfix') else '常规发布'}")
+        lines.append(f"  申 请 人: {release['applicant']}")
+        lines.append(f"  创建时间: {release['created_at']}")
+        lines.append(f"  发布状态: {release['status']} → {stats.get('gray_status', 'N/A')}")
+        lines.append("")
+
+        lines.append("【审批链路】")
+        approval_flow = release.get("approval_flow")
+        if approval_flow and approval_flow.get("nodes"):
+            lines.append(f"  审批进度: {stats.get('approval_progress', 'N/A')}")
+            lines.append(f"  审批状态: {approval_flow.get('status', 'N/A')}")
+            lines.append("")
+            for node in approval_flow["nodes"]:
+                status_icon = {"PENDING": "▶", "APPROVED": "✓", "REJECTED": "✗",
+                               "POST_APPROVED": "✓*", "NOT_STARTED": "○"}.get(node["status"], "?")
+                approver = node.get("approver", "N/A")
+                time_str = node.get("completed_at", node.get("created_at", ""))
+                comment = f" - {node['comment']}" if node.get("comment") else ""
+                lines.append(f"  {status_icon} 第{node['order']}步 {node['label']} [{node['status']}]")
+                lines.append(f"      审批人: {approver} | 时间: {time_str}{comment}")
+        else:
+            lines.append("  暂无审批链路数据")
+        lines.append("")
+
+        lines.append("【灰度批次进度】")
+        gray_plan = release.get("gray_plan")
+        if gray_plan and gray_plan.get("batches"):
+            lines.append(f"  灰度阶段: {gray_plan.get('status', 'N/A')}")
+            lines.append(f"  批次进度: 第{stats.get('current_batch', 0)}批 / 共{stats.get('total_batches', 0)}批")
+            lines.append(f"  监控轮数: 累计 {stats.get('total_cycles', 0)} 轮")
+            lines.append(f"  熔断次数: 累计 {stats.get('total_fuse', 0)} 次")
+            lines.append("")
+            for batch in gray_plan["batches"]:
+                status_icon = {"PENDING": "○", "RELEASING": "→", "OBSERVING": "▶",
+                               "COMPLETED": "✓", "ROLLED_BACK": "✗"}.get(batch["status"], "?")
+                metrics = batch.get("monitor_metrics", [])
+                names = set()
+                times = set()
+                for m in metrics:
+                    names.add(m["metric_name"])
+                    times.add(m["collected_at"])
+                cycles = len(times) if times else (len(metrics) // len(names) if names else 0)
+                fuse_count = len(batch.get("fuse_events", []))
+
+                lines.append(f"  {status_icon} 第{batch['batch_no']}批 ({batch['label']}) - [{batch['status']}]")
+                lines.append(f"      中心数: {batch['center_count']} | 观察期: {batch['observation_hours']}h")
+                if batch.get("release_time"):
+                    lines.append(f"      发布时间: {batch['release_time']}")
+                lines.append(f"      监控: {cycles}轮 | 熔断: {fuse_count}次")
+
+                if fuse_count > 0:
+                    for fe in batch["fuse_events"]:
+                        reason_names = ", ".join([r.get("metric", "") for r in fe.get("reasons", [])[:3]])
+                        lines.append(f"        ⚠ {fe['fuse_level_name']} @ {fe['trigger_time']}: {reason_names}")
+                lines.append("")
+        else:
+            lines.append("  暂无灰度发布数据")
+        lines.append("")
+
+        lines.append("【最近一轮监控指标】")
+        if gray_plan and gray_plan.get("batches"):
+            found_data = False
+            for batch in gray_plan["batches"]:
+                if batch["status"] == "PENDING":
+                    continue
+                metrics = batch.get("monitor_metrics", [])
+                if not metrics:
+                    continue
+                found_data = True
+                latest_by_name = {}
+                for m in metrics:
+                    name = m["metric_name"]
+                    if name not in latest_by_name or m["collected_at"] > latest_by_name[name]["collected_at"]:
+                        latest_by_name[name] = m
+
+                lines.append(f"  第{batch['batch_no']}批 ({batch['label']}):")
+                for name in sorted(latest_by_name.keys()):
+                    m = latest_by_name[name]
+                    status_icon = {"NORMAL": " ", "WARN": "!", "FUSE": "✗"}.get(m["status"], "?")
+                    unit = m.get("unit", "")
+                    lines.append(f"    {status_icon} {m['metric_label']}: {m['metric_value']}{unit}")
+            if not found_data:
+                lines.append("  暂无监控指标数据")
+        else:
+            lines.append("  暂无监控指标数据")
+        lines.append("")
+
+        lines.append("【熔断记录汇总】")
+        if stats.get("total_fuse", 0) > 0:
+            all_events = []
+            for batch in gray_plan["batches"]:
+                for event in batch.get("fuse_events", []):
+                    all_events.append({"batch_no": batch["batch_no"], "batch_label": batch["label"], **event})
+            for i, ev in enumerate(all_events, 1):
+                reasons = ", ".join([f"{r['metric']}={r['value']}" for r in ev.get("reasons", [])[:3]])
+                lines.append(f"  [{i}] 第{ev['batch_no']}批 - {ev['fuse_level_name']} @ {ev['trigger_time']}")
+                lines.append(f"      触发指标: {reasons}")
+        else:
+            lines.append("  暂无熔断记录")
+        lines.append("")
+
+        lines.append("【回滚信息】")
+        if release.get("status") == "ROLLED_BACK" or (
+            gray_plan and any(b.get("status") == "ROLLED_BACK" for b in gray_plan.get("batches", []))
+        ):
+            if gray_plan:
+                for batch in gray_plan["batches"]:
+                    if batch.get("status") == "ROLLED_BACK" and batch.get("rollback_time"):
+                        lines.append(f"  第{batch['batch_no']}批 回滚完成")
+                        lines.append(f"      回滚时间: {batch['rollback_time']}")
+                        if batch.get("rollback_version"):
+                            lines.append(f"      回滚版本: {batch['rollback_version']}")
+        else:
+            lines.append("  暂无回滚记录")
+        lines.append("")
+
+        lines.append("【关键审计流水】")
+        try:
+            audit_records = self.audit_logger.query(target_type="release", target_id=release_id)
+            audit_records = audit_records[:15]
+            if audit_records:
+                for i, rec in enumerate(audit_records, 1):
+                    op = rec.get("operation_type", "N/A")
+                    operator = rec.get("operator", "N/A")
+                    ts = rec.get("timestamp", rec.get("created_at", ""))
+                    detail = rec.get("detail", "")
+                    result = rec.get("result", rec.get("result_status", ""))
+                    short_detail = str(detail)[:50] if detail else ""
+                    lines.append(f"  [{i:02d}] {ts} | {operator:<10} | {op:<20} | {result:<10} {short_detail}")
+            else:
+                lines.append("  暂无审计记录")
+        except Exception as e:
+            lines.append(f"  审计查询失败: {e}")
+
+        lines.append("")
+        lines.append("=" * 80)
+        lines.append("  — 进度快照结束，请复制以上内容同步项目组 —")
+        lines.append("=" * 80)
+
+        return "\n".join(lines)
+
+    def get_timeline_text(self, release_id: str) -> str:
+        release = self.get_release(release_id)
+        if not release:
+            return f"错误：发布编号不存在 - {release_id}\n请使用 --list 命令查看所有发布"
+
+        events = []
+
+        events.append({
+            "time": release.get("created_at", ""),
+            "type": "创建申请",
+            "operator": release.get("applicant", "system"),
+            "result": "✓ 成功",
+            "detail": f"创建版本 {release['version']}，发布类型: {'Hotfix' if release.get('is_hotfix') else '常规'}"
+        })
+
+        validation = release.get("validation_result")
+        if validation:
+            events.append({
+                "time": validation.get("validated_at", ""),
+                "type": "发布校验",
+                "operator": validation.get("validator", "system"),
+                "result": f"{'✓ 通过' if validation.get('passed') else '✗ 未通过'}",
+                "detail": (f"高危: {validation.get('high_risk_count', 0)}, "
+                          f"中危: {validation.get('medium_risk_count', 0)}, "
+                          f"低危: {validation.get('low_risk_count', 0)}")
+            })
+
+        approval_flow = release.get("approval_flow")
+        if approval_flow and approval_flow.get("nodes"):
+            for node in approval_flow["nodes"]:
+                if node["status"] in ["APPROVED", "POST_APPROVED"]:
+                    events.append({
+                        "time": node.get("completed_at", ""),
+                        "type": f"审批: {node['label']}",
+                        "operator": node.get("approver", ""),
+                        "result": f"✓ {'补签' if node['status'] == 'POST_APPROVED' else '通过'}",
+                        "detail": node.get("comment", "")
+                    })
+                elif node["status"] == "REJECTED":
+                    events.append({
+                        "time": node.get("completed_at", ""),
+                        "type": f"审批: {node['label']}",
+                        "operator": node.get("approver", ""),
+                        "result": "✗ 拒绝",
+                        "detail": node.get("comment", "")
+                    })
+
+        gray_plan = release.get("gray_plan")
+        if gray_plan and gray_plan.get("batches"):
+            for batch in gray_plan["batches"]:
+                if batch.get("release_time"):
+                    events.append({
+                        "time": batch["release_time"],
+                        "type": f"灰度启动: 第{batch['batch_no']}批",
+                        "operator": batch.get("operator", "system"),
+                        "result": "✓ 成功",
+                        "detail": f"{batch['center_count']}个中心 - {batch['label']}"
+                    })
+                if batch.get("observation_start_time"):
+                    events.append({
+                        "time": batch["observation_start_time"],
+                        "type": f"进入观察期: 第{batch['batch_no']}批",
+                        "operator": "system",
+                        "result": f"▶ 观察中 ({batch['observation_hours']}h)",
+                        "detail": f"{batch['label']}"
+                    })
+
+                monitor_times = set()
+                for m in batch.get("monitor_metrics", []):
+                    monitor_times.add(m["collected_at"])
+                for i, mt in enumerate(sorted(monitor_times), 1):
+                    batch_metrics = [m for m in batch.get("monitor_metrics", [])
+                                     if m["collected_at"] == mt]
+                    abnormal = sum(1 for m in batch_metrics if m["status"] != "NORMAL")
+                    result_text = f"✓ 正常" if abnormal == 0 else f"⚠ {abnormal}项异常"
+                    events.append({
+                        "time": mt,
+                        "type": f"监控采集: 第{batch['batch_no']}批-第{i}轮",
+                        "operator": "system",
+                        "result": result_text,
+                        "detail": f"{len(batch_metrics)}项指标"
+                    })
+
+                for fe in batch.get("fuse_events", []):
+                    level_icon = {1: "⚠ 一级", 2: "⚠ 二级", 3: "⚠ 三级"}.get(fe.get("fuse_level"), "⚠")
+                    reason_text = ", ".join([r["metric"] for r in fe.get("reasons", [])[:2]])
+                    events.append({
+                        "time": fe.get("trigger_time", ""),
+                        "type": f"熔断触发: 第{batch['batch_no']}批",
+                        "operator": "system",
+                        "result": f"{level_icon}预警",
+                        "detail": f"{fe['fuse_level_name']} - 指标: {reason_text}"
+                    })
+
+                if batch.get("rollback_time"):
+                    events.append({
+                        "time": batch["rollback_time"],
+                        "type": f"执行回滚: 第{batch['batch_no']}批",
+                        "operator": batch.get("rollback_operator", "system"),
+                        "result": "✗ 回滚",
+                        "detail": f"回滚至版本: {batch.get('rollback_version', 'N/A')}"
+                    })
+
+                if batch["status"] == "COMPLETED" and batch.get("completed_at"):
+                    events.append({
+                        "time": batch.get("completed_at", ""),
+                        "type": f"批次完成: 第{batch['batch_no']}批",
+                        "operator": "system",
+                        "result": "✓ 完成",
+                        "detail": f"{batch['label']}观察期结束"
+                    })
+
+        report_path = os.path.join(
+            self.report_generator.report_dir,
+            f"release_{release_id}_report.txt"
+        )
+        if os.path.exists(report_path):
+            report_mtime = get_now_iso()
+            try:
+                report_mtime = datetime.datetime.fromtimestamp(
+                    os.path.getmtime(report_path), tz=datetime.timezone.utc
+                ).isoformat()
+            except Exception:
+                pass
+            events.append({
+                "time": report_mtime,
+                "type": "生成复盘报告",
+                "operator": "system",
+                "result": "✓ 已生成",
+                "detail": os.path.basename(report_path)
+            })
+
+        events.sort(key=lambda x: x["time"])
+
+        lines = []
+        lines.append("=" * 80)
+        lines.append("  CTMS 发布合规时间线")
+        lines.append("=" * 80)
+        lines.append(f"发布编号: {release['release_id']}")
+        lines.append(f"版本: {release['version']} | 项目: {release['project_id']}")
+        lines.append(f"当前状态: {release['status']}")
+        lines.append("")
+        lines.append(f"  {'时间':<26} {'操作类型':<22} {'操作者':<10} {'结果':<10} 详情")
+        lines.append("-" * 80)
+
+        for i, ev in enumerate(events, 1):
+            time_str = ev["time"][:26] if len(ev["time"]) > 26 else ev["time"]
+            op_type = ev["type"][:22]
+            operator = str(ev["operator"])[:10]
+            result = str(ev["result"])[:10]
+            detail = str(ev["detail"])[:40]
+            lines.append(f"{i:02d}|{time_str:<26} {op_type:<22} {operator:<10} {result:<10} {detail}")
+
+        lines.append("-" * 80)
+        lines.append(f"  共 {len(events)} 条事件记录")
+        lines.append("=" * 80)
 
         return "\n".join(lines)
 
@@ -784,6 +1173,8 @@ def main():
     query_group.add_argument("--metrics", action="store_true", help="查看最新监控指标")
     query_group.add_argument("--fuse-records", action="store_true", help="查看熔断记录")
     query_group.add_argument("--all-status", action="store_true", help="查看完整发布状态（审批+灰度+监控+熔断）")
+    query_group.add_argument("--snapshot", action="store_true", help="导出进度快照（适合复制同步项目组）")
+    query_group.add_argument("--timeline", action="store_true", help="查看合规时间线（串联关键操作流水）")
 
     args = parser.parse_args()
 
@@ -804,8 +1195,26 @@ def main():
     if args.list:
         releases = orchestrator.list_releases()
         print(f"共 {len(releases)} 条发布记录:")
+        print("")
+        print("-" * 120)
+        print(f"{'发布编号':<22} {'版本':<10} {'整体状态':<12} {'灰度阶段':<12} {'批次':<8} {'监控':<8} {'熔断':<6} {'审批':<8} 标题")
+        print("-" * 120)
         for r in releases:
-            print(f"  {r['release_id']} | {r['version']} | {r['status']} | {r['title']}")
+            stats = r.get("_stats", {})
+            release_id = r["release_id"][:20] + ".." if len(r["release_id"]) > 22 else r["release_id"]
+            version = r["version"][:10]
+            status = r["status"][:12]
+            gray_status = stats.get("gray_status", "N/A")[:12]
+            batch_info = f"{stats.get('current_batch', 0)}/{stats.get('total_batches', 0)}"
+            cycles = f"{stats.get('total_cycles', 0)}轮"
+            fuses = f"{stats.get('total_fuse', 0)}次"
+            approval = stats.get("approval_progress", "N/A")
+            title = r["title"][:25] + ".." if len(r["title"]) > 25 else r["title"]
+            print(f"{release_id:<22} {version:<10} {status:<12} {gray_status:<12} {batch_info:<8} {cycles:<8} {fuses:<6} {approval:<8} {title}")
+        print("-" * 120)
+        print("")
+        print("图例: 整体状态(PENDING待审批/APPROVING审批中/GRAYING灰度中/COMPLETED完成/ROLLED_BACK回滚)")
+        print("      灰度阶段(PLANNED已规划/RELEASING发布中/OBSERVING观察中/COMPLETED完成/ROLLED_BACK回滚)")
         return
 
     if args.create:
@@ -824,6 +1233,11 @@ def main():
         return
 
     if args.release_id and args.report:
+        release = orchestrator.get_release(args.release_id)
+        if not release:
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
+            return
         report = orchestrator.generate_report(args.release_id)
         report_file = os.path.join(
             orchestrator.report_generator.report_dir,
@@ -833,19 +1247,47 @@ def main():
         return
 
     if args.release_id and args.approval_status:
+        release = orchestrator.get_release(args.release_id)
+        if not release:
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
+            return
         print(orchestrator.get_approval_status_text(args.release_id))
         return
 
     if args.release_id and args.gray_status:
+        release = orchestrator.get_release(args.release_id)
+        if not release:
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
+            return
         print(orchestrator.get_gray_status_text(args.release_id))
         return
 
     if args.release_id and args.metrics:
+        release = orchestrator.get_release(args.release_id)
+        if not release:
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
+            return
         print(orchestrator.get_latest_metrics_text(args.release_id))
         return
 
     if args.release_id and args.fuse_records:
+        release = orchestrator.get_release(args.release_id)
+        if not release:
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
+            return
         print(orchestrator.get_fuse_records_text(args.release_id))
+        return
+
+    if args.release_id and args.snapshot:
+        print(orchestrator.get_snapshot_text(args.release_id))
+        return
+
+    if args.release_id and args.timeline:
+        print(orchestrator.get_timeline_text(args.release_id))
         return
 
     if args.release_id and args.all_status:
@@ -863,6 +1305,8 @@ def main():
             print(f"创建时间: {release['created_at']}")
             print(f"发布状态: {release['status']}")
             print(f"当前阶段: {release['current_stage']}")
+            if release.get("gray_plan") and release["gray_plan"].get("status"):
+                print(f"灰度阶段: {release['gray_plan']['status']}")
             print("")
             print(orchestrator.get_approval_status_text(args.release_id))
             print("")
@@ -872,7 +1316,8 @@ def main():
             print("")
             print(orchestrator.get_fuse_records_text(args.release_id))
         else:
-            print(f"发布不存在: {args.release_id}")
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
         return
 
     if args.release_id:
@@ -882,8 +1327,11 @@ def main():
             print(f"版 本 号: {release['version']}")
             print(f"发布状态: {release['status']}")
             print(f"当前阶段: {release['current_stage']}")
+            if release.get("gray_plan") and release["gray_plan"].get("status"):
+                print(f"灰度阶段: {release['gray_plan']['status']}")
         else:
-            print(f"发布不存在: {args.release_id}")
+            print(f"错误：发布编号不存在 - {args.release_id}")
+            print(f"请使用 --list 命令查看所有发布")
         return
 
     parser.print_help()

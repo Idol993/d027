@@ -1,12 +1,12 @@
 {
   "report_type": "release_review",
-  "release_id": "REL-20260622-996D40",
-  "generated_at": "2026-06-22T12:44:07.895960",
+  "release_id": "REL-20260622-DA7522",
+  "generated_at": "2026-06-22T13:06:44.487575",
   "overview": {
     "version": "2.3.0",
     "release_type": "常规发布",
     "applicant": "dev_li",
-    "apply_time": "2026-06-22T12:44:07.861191",
+    "apply_time": "2026-06-22T13:06:44.456121",
     "status": "观察中",
     "total_duration_hours": 0,
     "summary": "常规发布 - 观察中"
@@ -113,7 +113,7 @@
         "center_count": 9,
         "status": "OBSERVING",
         "observation_hours": 4,
-        "release_time": "2026-06-22T12:44:07.870974",
+        "release_time": "2026-06-22T13:06:44.465450",
         "rollback_time": null,
         "metric_count": 25,
         "fuse_event_count": 1,
@@ -121,42 +121,42 @@
           {
             "name": "approval_block_rate",
             "label": "审批阻塞率",
-            "value": 7.55,
+            "value": 9.13,
             "unit": "%",
             "status": "NORMAL",
-            "collected_at": "2026-06-22T12:44:07.892100"
+            "collected_at": "2026-06-22T13:06:44.483156"
           },
           {
             "name": "data_anomaly_rate",
             "label": "数据异常率",
-            "value": 0.9,
+            "value": 0.93,
             "unit": "%",
             "status": "NORMAL",
-            "collected_at": "2026-06-22T12:44:07.892100"
+            "collected_at": "2026-06-22T13:06:44.483156"
           },
           {
             "name": "entry_delay_rate",
             "label": "录入延迟率",
-            "value": 5.42,
+            "value": 3.32,
             "unit": "%",
             "status": "NORMAL",
-            "collected_at": "2026-06-22T12:44:07.892100"
+            "collected_at": "2026-06-22T13:06:44.483156"
           },
           {
             "name": "login_success_rate",
             "label": "登录成功率",
-            "value": 99.39,
+            "value": 98.66,
             "unit": "%",
             "status": "NORMAL",
-            "collected_at": "2026-06-22T12:44:07.892100"
+            "collected_at": "2026-06-22T13:06:44.483156"
           },
           {
             "name": "system_error_rate",
             "label": "系统错误率",
-            "value": 0.26,
+            "value": 0.23,
             "unit": "%",
             "status": "NORMAL",
-            "collected_at": "2026-06-22T12:44:07.892100"
+            "collected_at": "2026-06-22T13:06:44.483156"
           }
         ],
         "release_duration_minutes": 0.0,
@@ -201,7 +201,7 @@
         "batch_no": 1,
         "fuse_level": 1,
         "fuse_level_name": "一级熔断（预警）",
-        "trigger_time": "2026-06-22T12:44:07.888069",
+        "trigger_time": "2026-06-22T13:06:44.478810",
         "reasons": [
           {
             "metric": "录入延迟率",
@@ -243,38 +243,38 @@
     },
     "timeline": [
       {
-        "time": "2026-06-22T12:44:07.859876",
+        "time": "2026-06-22T13:06:44.454937",
         "event": "前置校验完成",
         "operator": "system",
         "detail": "通过"
       },
       {
-        "time": "2026-06-22T12:44:07.861191",
+        "time": "2026-06-22T13:06:44.456121",
         "event": "发布申请提交",
         "operator": "dev_li"
       },
       {
-        "time": "2026-06-22T12:44:07.862638",
+        "time": "2026-06-22T13:06:44.457539",
         "event": "临床审批 通过",
         "operator": "dr_zhang"
       },
       {
-        "time": "2026-06-22T12:44:07.864123",
+        "time": "2026-06-22T13:06:44.458848",
         "event": "数据审批 通过",
         "operator": "dm_li"
       },
       {
-        "time": "2026-06-22T12:44:07.865471",
+        "time": "2026-06-22T13:06:44.460160",
         "event": "质控审批 通过",
         "operator": "qa_wang"
       },
       {
-        "time": "2026-06-22T12:44:07.867024",
+        "time": "2026-06-22T13:06:44.461482",
         "event": "PM审批 通过",
         "operator": "pm_chen"
       },
       {
-        "time": "2026-06-22T12:44:07.870974",
+        "time": "2026-06-22T13:06:44.465450",
         "event": "第1批发布开始",
         "operator": "system"
       }
