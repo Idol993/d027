@@ -1,10 +1,10 @@
 {
-  "release_id": "REL-20260622-148306",
+  "release_id": "REL-20260622-996D40",
   "version": "2.3.0",
   "project_id": "CT-2024-001",
   "release_type": "NORMAL",
   "applicant": "dev_li",
-  "created_at": "2026-06-22T05:55:06.792971",
+  "created_at": "2026-06-22T12:44:07.861191",
   "status": "APPROVED",
   "nodes": [
     {
@@ -16,10 +16,10 @@
       "status": "APPROVED",
       "timeout_hours": 24,
       "comment": "经评估，本次发布不涉及受试者安全风险，方案执行无影响。",
-      "approved_at": "2026-06-22T05:55:06.794871",
+      "approved_at": "2026-06-22T12:44:07.862638",
       "delegated_to": null,
       "is_post_approval": false,
-      "activated_at": "2026-06-22T05:55:06.792987"
+      "activated_at": "2026-06-22T12:44:07.861205"
     },
     {
       "order": 2,
@@ -30,10 +30,10 @@
       "status": "APPROVED",
       "timeout_hours": 24,
       "comment": "数据迁移方案已评审，EDC同步接口兼容性验证通过。",
-      "approved_at": "2026-06-22T05:55:06.796571",
+      "approved_at": "2026-06-22T12:44:07.864123",
       "delegated_to": null,
       "is_post_approval": false,
-      "activated_at": "2026-06-22T05:55:06.794881"
+      "activated_at": "2026-06-22T12:44:07.862645"
     },
     {
       "order": 3,
@@ -44,10 +44,10 @@
       "status": "APPROVED",
       "timeout_hours": 24,
       "comment": "GCP合规性评估通过，TMF文档已同步更新。",
-      "approved_at": "2026-06-22T05:55:06.798349",
+      "approved_at": "2026-06-22T12:44:07.865471",
       "delegated_to": null,
       "is_post_approval": false,
-      "activated_at": "2026-06-22T05:55:06.796578"
+      "activated_at": "2026-06-22T12:44:07.864129"
     },
     {
       "order": 4,
@@ -58,14 +58,14 @@
       "status": "APPROVED",
       "timeout_hours": 24,
       "comment": "发布窗口确认，资源协调到位，同意发布。",
-      "approved_at": "2026-06-22T05:55:06.800245",
+      "approved_at": "2026-06-22T12:44:07.867024",
       "delegated_to": null,
       "is_post_approval": false,
-      "activated_at": "2026-06-22T05:55:06.798356"
+      "activated_at": "2026-06-22T12:44:07.865476"
     }
   ],
   "hotfix_reason": null,
   "deviation_recorded": false,
   "mode": "serial",
-  "approved_at": "2026-06-22T05:55:06.800255"
+  "approved_at": "2026-06-22T12:44:07.867031"
 }

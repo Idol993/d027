@@ -257,6 +257,7 @@ class GrayReleaseManager:
         batch = gray_plan["batches"][current_idx]
         metrics_config = self.monitor_config["metrics"]
 
+        collected_at = get_now_iso()
         collected = []
         for metric_cfg in metrics_config:
             metric_name = metric_cfg["name"]
@@ -274,7 +275,7 @@ class GrayReleaseManager:
                 "warn_threshold": metric_cfg["warn_threshold"],
                 "fuse_threshold": metric_cfg["fuse_threshold"],
                 "is_reverse": metric_cfg.get("reverse", False),
-                "collected_at": get_now_iso(),
+                "collected_at": collected_at,
                 "batch_no": batch["batch_no"]
             }
 

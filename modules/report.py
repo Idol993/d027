@@ -242,12 +242,43 @@ class ReportGenerator:
                 "release_time": batch.get("release_time"),
                 "rollback_time": batch.get("rollback_time"),
                 "metric_count": len(batch.get("monitor_metrics", [])),
-                "fuse_event_count": len(batch.get("fuse_events", []))
+                "fuse_event_count": len(batch.get("fuse_events", [])),
+                "latest_metrics": []
             }
 
             if batch.get("release_time") and batch.get("observation_start_time"):
                 duration = hours_between(batch["release_time"], batch["observation_start_time"])
                 batch_info["release_duration_minutes"] = round(duration * 60, 2)
+
+            metrics = batch.get("monitor_metrics", [])
+            metric_names = set()
+            collection_times = set()
+            if metrics:
+                latest_by_name = {}
+                for m in metrics:
+                    name = m["metric_name"]
+                    metric_names.add(name)
+                    collection_times.add(m["collected_at"])
+                    if name not in latest_by_name or m["collected_at"] > latest_by_name[name]["collected_at"]:
+                        latest_by_name[name] = m
+
+                for name, m in latest_by_name.items():
+                    batch_info["latest_metrics"].append({
+                        "name": m["metric_name"],
+                        "label": m["metric_label"],
+                        "value": m["metric_value"],
+                        "unit": m.get("unit", ""),
+                        "status": m["status"],
+                        "collected_at": m["collected_at"]
+                    })
+
+                batch_info["latest_metrics"].sort(key=lambda x: x["name"])
+
+            batch_info["metric_count"] = len(metrics)
+            batch_info["metric_type_count"] = len(metric_names)
+            batch_info["monitor_cycles"] = len(collection_times) if collection_times else (
+                len(metrics) // len(metric_names) if metric_names else 0
+            )
 
             batch_details.append(batch_info)
 
@@ -523,10 +554,22 @@ class ReportGenerator:
                     "APPROVED": "已通过",
                     "REJECTED": "已驳回",
                     "DELEGATED": "已转派",
-                    "POST_APPROVED": "事后补签"
+                    "POST_APPROVED": "事后补签",
+                    "NOT_STARTED": "未开始"
                 }
                 status_str = status_map.get(node["status"], node["status"])
-                lines.append(f"    {i}. {node['name']} - {node['approver']} - {status_str}")
+
+                prefix = ""
+                if node["status"] == "PENDING":
+                    prefix = "▶ "
+                elif node["status"] in ["APPROVED", "POST_APPROVED"]:
+                    prefix = "✓ "
+                elif node["status"] == "REJECTED":
+                    prefix = "✗ "
+                else:
+                    prefix = "○ "
+
+                lines.append(f"    {prefix}{i}. {node['name']} - {node['approver']} - {status_str}")
                 if node["duration_hours"] > 0:
                     lines.append(f"       耗时: {node['duration_hours']} 小时")
             if appr.get("hotfix_reason"):
@@ -569,7 +612,7 @@ class ReportGenerator:
                     lines.append(f"      发布时间: {batch['release_time']}")
                 if batch.get("rollback_time"):
                     lines.append(f"      回滚时间: {batch['rollback_time']}")
-                lines.append(f"      监控采集: {batch.get('metric_count', 0)} 轮")
+                lines.append(f"      监控采集: {batch.get('monitor_cycles', 0)} 轮")
                 if batch.get("fuse_event_count", 0) > 0:
                     lines.append(f"      熔断事件: {batch['fuse_event_count']} 次")
                 if batch.get("latest_metrics"):

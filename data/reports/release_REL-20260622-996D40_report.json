@@ -1,15 +1,15 @@
 {
   "report_type": "release_review",
-  "release_id": "REL-20260622-148306",
-  "generated_at": "2026-06-22T05:55:06.826562",
+  "release_id": "REL-20260622-996D40",
+  "generated_at": "2026-06-22T12:44:07.895960",
   "overview": {
     "version": "2.3.0",
     "release_type": "常规发布",
     "applicant": "dev_li",
-    "apply_time": "2026-06-22T05:55:06.792971",
-    "status": "已规划",
+    "apply_time": "2026-06-22T12:44:07.861191",
+    "status": "观察中",
     "total_duration_hours": 0,
-    "summary": "常规发布 - 已规划"
+    "summary": "常规发布 - 观察中"
   },
   "validation_analysis": {
     "available": true,
@@ -105,18 +105,63 @@
     "available": true,
     "total_centers": 25,
     "batch_count": 3,
-    "status": "PLANNED",
+    "status": "OBSERVING",
     "batches": [
       {
         "batch_no": 1,
         "level": "非核心/低入组中心",
         "center_count": 9,
-        "status": "PENDING",
+        "status": "OBSERVING",
         "observation_hours": 4,
-        "release_time": null,
+        "release_time": "2026-06-22T12:44:07.870974",
         "rollback_time": null,
-        "metric_count": 0,
-        "fuse_event_count": 0
+        "metric_count": 25,
+        "fuse_event_count": 1,
+        "latest_metrics": [
+          {
+            "name": "approval_block_rate",
+            "label": "审批阻塞率",
+            "value": 7.55,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T12:44:07.892100"
+          },
+          {
+            "name": "data_anomaly_rate",
+            "label": "数据异常率",
+            "value": 0.9,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T12:44:07.892100"
+          },
+          {
+            "name": "entry_delay_rate",
+            "label": "录入延迟率",
+            "value": 5.42,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T12:44:07.892100"
+          },
+          {
+            "name": "login_success_rate",
+            "label": "登录成功率",
+            "value": 99.39,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T12:44:07.892100"
+          },
+          {
+            "name": "system_error_rate",
+            "label": "系统错误率",
+            "value": 0.26,
+            "unit": "%",
+            "status": "NORMAL",
+            "collected_at": "2026-06-22T12:44:07.892100"
+          }
+        ],
+        "release_duration_minutes": 0.0,
+        "metric_type_count": 5,
+        "monitor_cycles": 5
       },
       {
         "batch_no": 2,
@@ -127,7 +172,10 @@
         "release_time": null,
         "rollback_time": null,
         "metric_count": 0,
-        "fuse_event_count": 0
+        "fuse_event_count": 0,
+        "latest_metrics": [],
+        "metric_type_count": 0,
+        "monitor_cycles": 0
       },
       {
         "batch_no": 3,
@@ -138,26 +186,44 @@
         "release_time": null,
         "rollback_time": null,
         "metric_count": 0,
-        "fuse_event_count": 0
+        "fuse_event_count": 0,
+        "latest_metrics": [],
+        "metric_type_count": 0,
+        "monitor_cycles": 0
       }
     ]
   },
   "fuse_analysis": {
     "available": true,
-    "total_fuse_events": 0,
-    "events": [],
-    "had_fuse": false
+    "total_fuse_events": 1,
+    "events": [
+      {
+        "batch_no": 1,
+        "fuse_level": 1,
+        "fuse_level_name": "一级熔断（预警）",
+        "trigger_time": "2026-06-22T12:44:07.888069",
+        "reasons": [
+          {
+            "metric": "录入延迟率",
+            "value": 12.0,
+            "threshold": 10.0,
+            "level": "warn"
+          }
+        ]
+      }
+    ],
+    "had_fuse": true
   },
   "risks_and_improvements": {
     "risks": [
       {
-        "type": "无",
-        "description": "本次发布未发现显著风险",
-        "severity": "低"
+        "type": "熔断触发",
+        "description": "灰度发布期间触发 1 次熔断",
+        "severity": "高"
       }
     ],
     "improvements": [
-      "发布过程顺利，持续保持"
+      "加强发布前测试覆盖，降低生产环境故障概率"
     ]
   },
   "appendix": {
@@ -177,35 +243,40 @@
     },
     "timeline": [
       {
-        "time": "2026-06-22T05:55:06.791764",
+        "time": "2026-06-22T12:44:07.859876",
         "event": "前置校验完成",
         "operator": "system",
         "detail": "通过"
       },
       {
-        "time": "2026-06-22T05:55:06.792971",
+        "time": "2026-06-22T12:44:07.861191",
         "event": "发布申请提交",
         "operator": "dev_li"
       },
       {
-        "time": "2026-06-22T05:55:06.794871",
+        "time": "2026-06-22T12:44:07.862638",
         "event": "临床审批 通过",
         "operator": "dr_zhang"
       },
       {
-        "time": "2026-06-22T05:55:06.796571",
+        "time": "2026-06-22T12:44:07.864123",
         "event": "数据审批 通过",
         "operator": "dm_li"
       },
       {
-        "time": "2026-06-22T05:55:06.798349",
+        "time": "2026-06-22T12:44:07.865471",
         "event": "质控审批 通过",
         "operator": "qa_wang"
       },
       {
-        "time": "2026-06-22T05:55:06.800245",
+        "time": "2026-06-22T12:44:07.867024",
         "event": "PM审批 通过",
         "operator": "pm_chen"
+      },
+      {
+        "time": "2026-06-22T12:44:07.870974",
+        "event": "第1批发布开始",
+        "operator": "system"
       }
     ]
   }
